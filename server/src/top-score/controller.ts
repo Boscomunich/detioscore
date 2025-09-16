@@ -12,8 +12,16 @@ export async function createTopScore(
   res: Response,
   next: NextFunction
 ) {
-  const { name, numberOfTeams, participantCap, price, visibility, rules } =
-    req.body;
+  const {
+    name,
+    numberOfTeams,
+    participantCap,
+    price,
+    visibility,
+    rules,
+    startDate,
+    endDate,
+  } = req.body;
   const invitationCode = generateRandomString(10, "A-Z", "0-9", "a-z");
   try {
     const competition = new Competition({
@@ -27,6 +35,8 @@ export async function createTopScore(
       hostContribution: price,
       isPublic: visibility === "public",
       rules,
+      startDate,
+      endDate,
     });
 
     competition.participants.push({

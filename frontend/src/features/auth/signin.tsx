@@ -42,7 +42,7 @@ export function SigninForm() {
 
   // 2. Define a submit handler.
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    const { data, error } = await authClient.signIn.email(
+    await authClient.signIn.email(
       {
         email: values.email,
         password: values.password,
@@ -51,7 +51,9 @@ export function SigninForm() {
         onRequest: () => setIsLoading(true),
         onSuccess: async () => {
           setIsLoading(false);
-          toast.success("Signup successful! Please verify your email.");
+          toast.success(
+            "Welcome to Ditioscore! you will be redirected back to the previous page"
+          );
           setTimeout(() => {
             navigate(location.state?.pathname || "/");
           }, 2000);
@@ -63,7 +65,6 @@ export function SigninForm() {
       }
     );
     setIsLoading(false);
-    console.log("data", data, "error", error);
   }
 
   async function signInWithGoogle() {

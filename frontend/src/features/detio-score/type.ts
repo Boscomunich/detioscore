@@ -29,6 +29,8 @@ export interface Competition {
     durationDays: number;
     matchRequirement: number;
   };
+  startDate: string;
+  endDate: string;
 }
 
 export interface UploadedImage {

@@ -19,6 +19,26 @@ const getTypeColor = (type: Competition["type"]) => {
   }
 };
 
+const getUserStatusColor = (status: string) => {
+  switch (status) {
+    case "owner":
+      return "bg-blue-100 text-blue-800 border-blue-200";
+    case "pending":
+      return "bg-yellow-100 text-yellow-800 border-yellow-200";
+    case "joined":
+      return "bg-green-100 text-green-800 border-green-200";
+    case "guest":
+    default:
+      return "bg-gray-100 text-gray-800 border-gray-200";
+  }
+};
+
+const getVisibilityColor = (isPublic: boolean) => {
+  return isPublic
+    ? "bg-green-100 text-green-800 border-green-200"
+    : "bg-red-100 text-red-800 border-red-200";
+};
+
 const formatDate = (dateString: string) => {
   return new Date(dateString).toLocaleDateString("en-US", {
     month: "short",
@@ -40,13 +60,15 @@ export default function CompetitionCard({
   let path: string;
   if (session?.user.id === competition.createdBy) {
     userStatus = "owner";
-    path = "details";
+    path = `${competition.type}/details`;
+    path = path.toLowerCase();
   } else {
     const participant = competition.participants.find(
       (p) => p.user.toString() === session?.user.id
     );
 
-    path = competition._id;
+    path = `${competition.type}/${competition._id}`;
+    path = path.toLowerCase();
 
     if (!participant) {
       userStatus = "guest";
@@ -54,12 +76,13 @@ export default function CompetitionCard({
       userStatus = participant.status;
     }
   }
+
   return (
     <div
       key={competition._id}
       className="flex flex-col border rounded-lg shadow hover:shadow-lg transition-shadow p-2 w-full mb-4"
       onClick={() => {
-        navigate(`topscore/${path}`, {
+        navigate(path, {
           state: { competition, userStatus, path },
         });
       }}
@@ -69,10 +92,19 @@ export default function CompetitionCard({
         <h2 className="md:text-lg text-sm font-semibold text-balance leading-tight">
           {competition.name}
         </h2>
-        <div>
+        <div className="flex gap-1">
           <span
             className={cn(
-              "px-1 py-0.5 text-[10px] font-medium rounded bg-primary/30 mx-3 text-primary"
+              "px-1 py-0.5 text-[10px] font-medium rounded border",
+              getVisibilityColor(competition.isPublic)
+            )}
+          >
+            {competition.isPublic ? "Public" : "Private"}
+          </span>
+          <span
+            className={cn(
+              "px-1 py-0.5 text-[10px] font-medium rounded border",
+              getUserStatusColor(userStatus)
             )}
           >
             {userStatus === "owner"
@@ -80,8 +112,8 @@ export default function CompetitionCard({
               : userStatus === "pending"
               ? "Select teams"
               : userStatus === "joined"
-              ? "View"
-              : ""}
+              ? "View table"
+              : "Join"}
           </span>
           <span
             className={`px-1 py-0.5 text-[10px] font-medium rounded ${getTypeColor(
@@ -128,9 +160,17 @@ export default function CompetitionCard({
           </div>
         )}
 
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between text-xs text-muted-foreground mb-3 gap-2">
-          <div className="flex items-center gap-2">
-            <Calendar className="w-4 h-4" />
+        <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground mb-1">
+          <div className="flex items-center gap-1">
+            <Calendar className="w-3 h-3" />
+            <span>Start {formatDate(competition.startDate)}</span>
+          </div>
+          <div className="flex items-center gap-1">
+            <Calendar className="w-3 h-3" />
+            <span>End {formatDate(competition.endDate)}</span>
+          </div>
+          <div className="flex items-center gap-1">
+            <Calendar className="w-3 h-3" />
             <span>Created {formatDate(competition.createdAt)}</span>
           </div>
         </div>

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -44,6 +44,8 @@ const formSchema = z.object({
       })
     )
     .optional(),
+  startDate: z.string().min(1, "Start date is required"),
+  endDate: z.string().min(1, "End date is required"),
 });
 
 export default function CreateTopScoreCompetitionPage() {
@@ -66,8 +68,18 @@ export default function CreateTopScoreCompetitionPage() {
       price: undefined,
       visibility: "public",
       rules: [],
+      startDate: "",
+      endDate: "",
     },
   });
+
+  const startDate = form.watch("startDate");
+
+  useEffect(() => {
+    if (startDate) {
+      form.setValue("endDate", startDate); // mirror startDate
+    }
+  }, [startDate, form]);
 
   function handleAddRule() {
     if (!ruleDescription.trim()) return;
@@ -304,6 +316,39 @@ export default function CreateTopScoreCompetitionPage() {
               Add as many rules (steps) as you like. Each must be unique.
             </FormDescription>
           </div>
+
+          {/* Start Date */}
+          <FormField
+            control={form.control}
+            name="startDate"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Start Date</FormLabel>
+                <FormControl>
+                  <Input type="date" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          {/* End Date (auto-set from startDate) */}
+          <FormField
+            control={form.control}
+            name="endDate"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>End Date</FormLabel>
+                <FormControl>
+                  <Input type="date" {...field} disabled />
+                </FormControl>
+                <FormDescription>
+                  End date is automatically set to the start date.
+                </FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
 
           <Button type="submit" className="w-full h-12">
             {mutation.isPending ? (

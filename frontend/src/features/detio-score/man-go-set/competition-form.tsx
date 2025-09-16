@@ -17,6 +17,7 @@ import { useMutation } from "@tanstack/react-query";
 import { authApiClient } from "@/api-config";
 import { toast } from "sonner";
 import { Loader } from "lucide-react";
+import { useEffect } from "react";
 
 const formSchema = z.object({
   name: z.string().min(3, { message: "Competition name is too short" }),
@@ -31,6 +32,8 @@ const formSchema = z.object({
   visibility: z.enum(["public", "private"]).refine((val) => val !== undefined, {
     message: "Please select visibility type",
   }),
+  startDate: z.string().min(1, "Start date is required"),
+  endDate: z.string().min(1, "End date is required"),
 });
 
 export default function CreateManGoSetCompetitionPage() {
@@ -42,8 +45,18 @@ export default function CreateManGoSetCompetitionPage() {
       participantCap: 2,
       stake: 1,
       visibility: "public",
+      startDate: "",
+      endDate: "",
     },
   });
+
+  const startDate = form.watch("startDate");
+
+  useEffect(() => {
+    if (startDate) {
+      form.setValue("endDate", startDate);
+    }
+  }, [startDate, form]);
 
   const mutation = useMutation({
     mutationFn: async (data: any) => {

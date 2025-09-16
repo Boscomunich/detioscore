@@ -80,6 +80,8 @@ const CompetitionSchema = new mongoose.Schema(
       ref: "User",
       default: null,
     },
+    startDate: { type: Date, default: null },
+    endDate: { type: Date, default: null },
   },
   { timestamps: true }
 );

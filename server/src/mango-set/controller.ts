@@ -11,7 +11,15 @@ export async function createMangoSet(
   res: Response,
   next: NextFunction
 ) {
-  const { name, numberOfTeams, participantCap, stake, visibility } = req.body;
+  const {
+    name,
+    numberOfTeams,
+    participantCap,
+    stake,
+    visibility,
+    startDate,
+    endDate,
+  } = req.body;
   const invitationCode = generateRandomString(10, "A-Z", "0-9", "a-z");
   try {
     const competition = new Competition({
@@ -25,6 +33,8 @@ export async function createMangoSet(
       invitationCode,
       hostContribution: stake,
       isPublic: visibility === "public",
+      startDate,
+      endDate,
     });
 
     competition.participants.push({

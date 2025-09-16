@@ -73,9 +73,9 @@ export function SignupForm() {
         onRequest: () => setIsLoading(true),
         onSuccess: () => {
           setIsLoading(false);
-          toast.success("Signup successful! Please verify your email.");
+          toast.success("Signup successful!");
           setTimeout(() => {
-            navigate("/login");
+            navigate("/signin");
           }, 2000);
         },
         onError: (ctx) => {
