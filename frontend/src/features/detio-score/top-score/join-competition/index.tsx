@@ -9,13 +9,17 @@ export default function JoinTopScore() {
   const { state } = useLocation();
 
   useEffect(() => {
-    if (state?.userStatus === "pending") {
+    if (
+      state?.userStatus === "pending" ||
+      state.competition.rules.length === 0 ||
+      state.userStatus === "owner"
+    ) {
       setStep(3);
     }
-  }, [state?.userStatus]);
+  }, [state?.userStatus, state.competition]);
 
   return (
-    <div className="h-full min-h-[80vh] w-[95%] flex flex-col justify-center items-center max-w-4xl border rounded-sm my-2 mb-24 py-6 mx-auto px-6">
+    <div className="h-full min-h-[80vh] w-[95%] flex flex-col justify-center items-center max-w-4xl border rounded-sm my-2 mb-24 py-6 mx-auto px-2 md:px-6">
       <Link
         to=""
         className=" text-4xl font-bold flex justify-center gap-2 items-center my-6"
@@ -37,9 +41,9 @@ export default function JoinTopScore() {
       {step === 1 ? (
         <CompetitionRule setStep={setStep} competition={state?.competition} />
       ) : step === 2 ? (
-        <UploadProof competition={state?.competition} />
+        <UploadProof setStep={setStep} competition={state?.competition} />
       ) : (
-        <SelectTeamForm />
+        <SelectTeamForm competition={state?.competition} />
       )}
     </div>
   );

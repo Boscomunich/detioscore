@@ -1,6 +1,5 @@
 import axios from "axios";
-
-let url;
+let url: string;
 
 if (
   window.location.hostname === "localhost" ||

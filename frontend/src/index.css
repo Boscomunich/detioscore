@@ -119,10 +119,12 @@
   }
 }
 
-.no-scrollbar::-webkit-scrollbar {
-  display: none;
-}
-.no-scrollbar {
-  -ms-overflow-style: none; /* IE/Edge */
+.my-scroll-container {
+  overflow-y: scroll; /* still scrollable */
+  -ms-overflow-style: none; /* IE and Edge */
   scrollbar-width: none; /* Firefox */
+}
+
+.my-scroll-container::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Edge */
 }

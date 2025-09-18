@@ -1,16 +1,17 @@
 import { useEffect, useState } from "react";
 import { Link, useLocation } from "react-router";
 import CompetitionRule from "./rule";
+import SelectTeamForm from "./join-competition-form";
 
-export default function JoinTopScore() {
+export default function JoinManGoSet() {
   const [step, setStep] = useState(1);
   const { state } = useLocation();
 
   useEffect(() => {
-    if (state?.userStatus === "pending") {
-      setStep(3);
+    if (state?.userStatus === "pending" || state.userStatus === "owner") {
+      setStep(2);
     }
-  }, [state?.userStatus]);
+  }, [state?.userStatus, state.competition]);
 
   return (
     <div className="h-full min-h-[80vh] w-[95%] flex flex-col justify-center items-center max-w-4xl border rounded-sm my-2 mb-24 py-6 mx-auto px-6">
@@ -34,10 +35,8 @@ export default function JoinTopScore() {
       </div>
       {step === 1 ? (
         <CompetitionRule setStep={setStep} competition={state?.competition} />
-      ) : step === 2 ? (
-        <div />
       ) : (
-        <div />
+        <SelectTeamForm competition={state?.competition} />
       )}
     </div>
   );

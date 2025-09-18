@@ -58,20 +58,30 @@ export default function CompetitionCard({
 
   let userStatus: string;
   let path: string;
+
+  path = `${competition.type}/${competition._id}`;
+  path = path.toLowerCase();
+
   if (session?.user.id === competition.createdBy) {
+    const participant = competition.participants.find(
+      (p) => p.user.toString() === session?.user.id
+    );
     userStatus = "owner";
-    path = `${competition.type}/details`;
-    path = path.toLowerCase();
+    if (participant?.status === "joined") {
+      path = `${competition._id}/details`;
+      path = path.toLowerCase();
+    }
   } else {
     const participant = competition.participants.find(
       (p) => p.user.toString() === session?.user.id
     );
 
-    path = `${competition.type}/${competition._id}`;
-    path = path.toLowerCase();
-
     if (!participant) {
       userStatus = "guest";
+    } else if (participant.status === "joined") {
+      userStatus = participant.status;
+      path = `${competition._id}/details`;
+      path = path.toLowerCase();
     } else {
       userStatus = participant.status;
     }

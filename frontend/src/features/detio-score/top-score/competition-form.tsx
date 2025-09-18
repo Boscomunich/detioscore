@@ -125,7 +125,6 @@ export default function CreateTopScoreCompetitionPage() {
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     const finalValues = { ...values, rules };
-    console.log(finalValues);
     mutation.mutate(finalValues);
   }
 

@@ -43,12 +43,7 @@ const generalRules = [
   },
 ];
 
-export default function CompetitionRule({
-  setStep,
-  competition,
-}: CompetitionRuleProps) {
-  console.log("top-score", competition);
-
+export default function CompetitionRule({ setStep }: CompetitionRuleProps) {
   return (
     <div className="w-full flex flex-col items-center gap-4 mb-16">
       <div className="w-[70%] max-w-[500px] text-center text-xl">

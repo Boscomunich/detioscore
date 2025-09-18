@@ -1,18 +1,18 @@
 import mongoose, { Schema, Document, model } from "mongoose";
 
 interface ITeam {
+  teamId: number;
   name: string;
   logo?: string;
-  id: string;
 }
 
 interface ITeamPoints {
-  team: string;
+  teamId: number;
   points: number;
 }
 
 interface IProof {
-  step: string; // changed from number to string
+  step: string;
   url: string;
   verified: boolean;
 }
@@ -21,8 +21,8 @@ export interface ITeamSelection extends Document {
   competition: mongoose.Types.ObjectId;
   user: mongoose.Types.ObjectId;
   stakedAmount: number;
-  teams?: ITeam[];
-  starTeam?: string;
+  teams: ITeam[];
+  starTeam?: number | null;
   teamPoints: ITeamPoints[];
   totalPoints: number;
   rank?: number;
@@ -45,22 +45,22 @@ const TeamSelectionSchema: Schema<ITeamSelection> = new Schema(
     teams: {
       type: [
         {
-          name: { type: String },
+          teamId: { type: Number, required: true },
+          name: { type: String, required: true },
           logo: { type: String, default: "" },
-          id: { type: String },
         },
       ],
       default: [],
     },
 
     starTeam: {
-      type: String,
-      default: "",
+      type: Number,
+      default: null,
       validate: {
-        validator: function (value: string) {
+        validator: function (value: number) {
           const doc = this as ITeamSelection;
           if (!value) return true;
-          return doc.teams?.some((team) => team.id === value);
+          return doc.teams?.some((team) => team.teamId === value);
         },
         message: "Star team must be one of the selected teams",
       },
@@ -69,7 +69,7 @@ const TeamSelectionSchema: Schema<ITeamSelection> = new Schema(
     teamPoints: {
       type: [
         {
-          team: { type: String },
+          teamId: { type: Number, required: true },
           points: { type: Number, default: 0 },
         },
       ],
@@ -82,7 +82,7 @@ const TeamSelectionSchema: Schema<ITeamSelection> = new Schema(
     proofs: {
       type: [
         {
-          step: { type: String, required: true }, // changed to string
+          step: { type: String, required: true },
           url: { type: String, required: true },
           verified: { type: Boolean, default: false },
         },
@@ -95,23 +95,13 @@ const TeamSelectionSchema: Schema<ITeamSelection> = new Schema(
   { timestamps: true }
 );
 
-// Partial unique index
-TeamSelectionSchema.index(
-  { competition: 1, starTeam: 1 },
-  {
-    unique: true,
-    partialFilterExpression: { starTeam: { $exists: true, $ne: "" } },
-  }
-);
+//Ensure one TeamSelection per (competition, user)
+TeamSelectionSchema.index({ competition: 1, user: 1 }, { unique: true });
 
-// Handle duplicate starTeam errors
+// Handle duplicate entries
 TeamSelectionSchema.post("save", function (error: any, doc: any, next: any) {
   if (error.code === 11000) {
-    next(
-      new Error(
-        "This star team has already been selected for this competition."
-      )
-    );
+    next(new Error("You have already joined this competition."));
   } else {
     next(error);
   }

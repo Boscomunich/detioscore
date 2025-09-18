@@ -1,75 +1,72 @@
-import express, { Request, Response } from "express";
+import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
 import morgan from "morgan";
 import helmet from "helmet";
-import { livescoreRouter } from "./src/livescore/route";
-import { connectToDatabase } from "./src/database";
-import globalErrorHandler from "./src/middleware/error-handler";
-import { toNodeHandler } from "better-auth/node";
-import { auth, connectAuthClient } from "./utils/auth";
-// import { blockBlacklistedIP } from "./utils/blocked-ip";
 import cookieParser from "cookie-parser";
+import { toNodeHandler } from "better-auth/node";
+
+import { connectToDatabase } from "./src/database";
+
+import { livescoreRouter } from "./src/livescore/route";
 import { topScoreRouter } from "./src/top-score/route";
-import { sessionMiddleware } from "./src/middleware/session";
 import { manGoSetRouter } from "./src/mango-set/route";
 import { competitionRouter } from "./src/competition/route";
+import globalErrorHandler from "./src/middleware/error-handler";
+import { sessionMiddleware } from "./src/middleware/session";
+import { createAuth } from "./utils/auth";
+
 dotenv.config();
 
-const port: number = parseInt(process.env.PORT || "6000", 10);
-const allowedOrigins: string[] = [
+const port = parseInt(process.env.PORT || "6000", 10);
+const allowedOrigins = [
   process.env.LOCAL_CLIENT!,
   process.env.PROD_CLIENT!,
   process.env.PROD_CLIENT_2ND!,
 ];
 
-const app = express();
-app.use(morgan("dev"));
-app.use(
-  helmet({
-    crossOriginResourcePolicy: { policy: "cross-origin" },
-  })
-);
-app.use(
-  cors({
-    origin: allowedOrigins,
-    methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
-    credentials: true,
-    allowedHeaders: "Content-Type, Authorization",
-  })
-);
+async function startServer() {
+  await connectToDatabase();
 
-connectToDatabase();
-connectAuthClient();
+  const auth = createAuth();
 
-// app.use(blockBlacklistedIP);
+  const app = express();
+  app.use(morgan("dev"));
+  app.use(
+    helmet({
+      crossOriginResourcePolicy: { policy: "cross-origin" },
+    })
+  );
+  app.use(
+    cors({
+      origin: allowedOrigins,
+      methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
+      credentials: true,
+      allowedHeaders: "Content-Type, Authorization",
+    })
+  );
+  app.use(cookieParser());
 
-app.use(cookieParser());
+  // Better Auth endpoints
+  app.options(
+    "/api/auth/{*any}",
+    cors({ origin: allowedOrigins, credentials: true })
+  );
+  app.all("/api/auth/{*any}", toNodeHandler(auth));
 
-// Handle preflight OPTIONS requests for Better Auth
-app.options(
-  "/api/auth/{*any}",
-  cors({ origin: allowedOrigins, credentials: true })
-);
-app.all("/api/auth/{*any}", toNodeHandler(auth));
+  app.get("/", (req, res) => res.json("Welcome to detio score API"));
+  app.use(express.json());
 
-app.get("/", (req: Request, res: Response) => {
-  res.json("Welcome to detio score API");
-});
+  app.use("/livescore", livescoreRouter);
+  app.use("/top-score", sessionMiddleware(auth), topScoreRouter);
+  app.use("/man-go-set", sessionMiddleware(auth), manGoSetRouter);
+  app.use("/competition", sessionMiddleware(auth), competitionRouter);
 
-app.use(express.json());
+  app.use(globalErrorHandler);
 
-app.use("/livescore", livescoreRouter);
+  app.listen(port, () => {
+    console.log(`Server listening on port ${port}`);
+  });
+}
 
-app.use("/top-score", sessionMiddleware, topScoreRouter);
-
-app.use("/man-go-set", sessionMiddleware, manGoSetRouter);
-
-app.use("/competition", sessionMiddleware, competitionRouter);
-
-app.use(globalErrorHandler);
-
-// Start server
-app.listen(port, () => {
-  console.log(`Server listening on port ${port}`);
-});
+startServer();

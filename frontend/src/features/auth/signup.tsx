@@ -19,6 +19,17 @@ import { Link, useNavigate } from "react-router";
 import { authClient } from "@/lib/auth-client";
 import { toast } from "sonner";
 
+let url: string;
+
+if (
+  window.location.hostname === "localhost" ||
+  window.location.hostname === "127.0.0.1"
+) {
+  url = "http://localhost:5173";
+} else {
+  url = "https://ditioscore.com";
+}
+
 const formSchema = z
   .object({
     username: z.string().min(2, {
@@ -57,6 +68,7 @@ export function SignupForm() {
   async function signInWithGoogle() {
     await authClient.signIn.social({
       provider: "google",
+      callbackURL: url,
     });
   }
 

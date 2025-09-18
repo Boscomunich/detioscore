@@ -13,7 +13,8 @@ import { SigninForm } from "./features/auth/signin";
 import CreateTopScoreCompetitionPage from "./features/detio-score/top-score/competition-form";
 import CreateManGoSetCompetitionPage from "./features/detio-score/man-go-set/competition-form";
 import JoinTopScore from "./features/detio-score/top-score/join-competition";
-import CompetitionInfo from "./features/detio-score/top-score/info";
+import CompetitionInfo from "./features/detio-score/info";
+import JoinManGoSet from "./features/detio-score/man-go-set/join-competition";
 
 function ScrollToTop() {
   const { pathname } = useLocation();
@@ -42,14 +43,12 @@ function App() {
             element={<CreateTopScoreCompetitionPage />}
           />
           <Route path="detio-score/topscore/:id" element={<JoinTopScore />} />
-          <Route
-            path="detio-score/topscore/details"
-            element={<CompetitionInfo />}
-          />
+          <Route path="detio-score/:id/details" element={<CompetitionInfo />} />
           <Route
             path="detio-score/mango-set/create-new-competition"
             element={<CreateManGoSetCompetitionPage />}
           />
+          <Route path="detio-score/mangoset/:id" element={<JoinManGoSet />} />
           <Route path="favourite" element={<Favourite />} />
           <Route path="league" element={<League />} />
           <Route path="profile" element={<Profile />} />

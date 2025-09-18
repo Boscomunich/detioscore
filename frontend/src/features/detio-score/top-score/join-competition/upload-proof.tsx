@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, type Dispatch, type SetStateAction } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ImageUploadStep } from "./image-upload-step";
@@ -15,7 +15,12 @@ interface UploadedImage {
   stepId: string;
 }
 
-export function UploadProof({ competition }: { competition: Competition }) {
+interface CompetitionRuleProps {
+  setStep: Dispatch<SetStateAction<number>>;
+  competition: Competition;
+}
+
+export function UploadProof({ setStep, competition }: CompetitionRuleProps) {
   const [images, setImages] = useState<UploadedImage[]>([]);
 
   // Only steps where stepVerification === true
@@ -63,10 +68,11 @@ export function UploadProof({ competition }: { competition: Competition }) {
   const { mutate, isPending } = useMutation({
     mutationFn: handleSubmitUpload,
     onSuccess: () => {
-      toast.success("Competition created successfully!");
+      toast.success("Upload successful");
+      setStep(3);
     },
     onError: (error) => {
-      toast.error("Error creating competition:");
+      toast.error("Failed to upload");
       console.log(error);
     },
   });

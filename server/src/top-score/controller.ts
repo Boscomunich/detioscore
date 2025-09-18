@@ -41,7 +41,7 @@ export async function createTopScore(
 
     competition.participants.push({
       user: req.user?.id,
-      status: "joined",
+      status: "pending",
       joinedAt: new Date(),
     });
 
@@ -60,24 +60,16 @@ export async function joinTopScoreCompetition(
 ) {
   const { competitionId } = req.params;
   const { id: userId } = req.user;
-  const { teams, starTeam, stakedAmount, proofs } = req.body;
+  const teams = req.body;
 
   try {
-    //Find competition
+    // Find competition
     const competition = await Competition.findById(competitionId);
     if (!competition || !competition.isActive) {
       throw new AppError("Competition not found or inactive", 404);
     }
 
-    // Prevent creator from joining again
-    if (competition.createdBy.toString() === userId.toString()) {
-      throw new AppError(
-        "The competition creator is already a participant",
-        400
-      );
-    }
-
-    //Check participant cap
+    // Check participant cap
     const participantCount = competition.participants.length;
     if (
       competition.participantCap &&
@@ -86,7 +78,7 @@ export async function joinTopScoreCompetition(
       throw new AppError("Competition participant limit reached", 400);
     }
 
-    //Check if user already joined
+    // Check if user already joined
     let teamSelection = await TeamSelection.findOne({
       competition: competitionId,
       user: userId,
@@ -104,33 +96,48 @@ export async function joinTopScoreCompetition(
       });
     }
 
-    //Handle teams and starTeam if provided
-    if (teams && teams.length > 0) {
-      if (
-        teams.length < competition.minTeams ||
-        teams.length > competition.maxTeams
-      ) {
-        throw new AppError(
-          `You must select between ${competition.minTeams} and ${competition.maxTeams} teams`,
-          400
-        );
-      }
-      teamSelection.teams = teams;
+    // Handle teams from frontend
+    if (!teams || teams.length === 0) {
+      throw new AppError("You must select at least one team", 400);
     }
 
-    if (starTeam) {
-      teamSelection.starTeam = starTeam;
+    if (
+      teams.length < competition.minTeams ||
+      teams.length > competition.maxTeams
+    ) {
+      throw new AppError(
+        `You must select between ${competition.minTeams} and ${competition.maxTeams} teams`,
+        400
+      );
     }
 
-    //Handle staked amount
-    if (stakedAmount) {
-      teamSelection.stakedAmount = stakedAmount;
+    const formattedTeams = teams.map((t: any) => ({
+      teamId: t.teamId,
+      name: t.teamName, // schema expects "name"
+      logo: t.teamLogo,
+    }));
+
+    // Extract single star team
+    const starredTeams = teams.filter((t: any) => t.isStarred);
+    if (starredTeams.length > 1) {
+      throw new AppError("You can only star one team", 400);
     }
 
-    //Save TeamSelection
+    if (starredTeams.length < 1) {
+      throw new AppError("you must select at least one start team");
+    }
+
+    const starTeamId =
+      starredTeams.length === 1 ? starredTeams[0].teamId : null;
+
+    teamSelection.teams = formattedTeams;
+    teamSelection.starTeam = starTeamId;
+
     await teamSelection.save();
 
-    //Add user to competition participants if not already
+    await teamSelection.save();
+
+    // Add user to competition participants if not already
     const existingParticipant = competition.participants.find(
       (p) => p.user.toString() === userId.toString()
     );
@@ -139,13 +146,14 @@ export async function joinTopScoreCompetition(
       existingParticipant.status = "joined";
       existingParticipant.joinedAt = new Date();
     } else {
-      // Add new participant
       competition.participants.push({
         user: userId,
         status: "joined",
         joinedAt: new Date(),
       });
     }
+
+    await competition.save();
 
     res.status(200).json({
       message: "Successfully joined the competition",

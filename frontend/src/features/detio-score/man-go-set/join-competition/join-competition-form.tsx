@@ -2,7 +2,6 @@ import { useState, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { TeamCard } from "../../team-card";
 import { AlertCircle, Loader, Loader2, Users } from "lucide-react";
 import type {
   FixtureResponse,
@@ -13,6 +12,7 @@ import { apiClient, authApiClient } from "@/api-config";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { useNavigate } from "react-router";
+import { TeamCard } from "../../team-card";
 
 function sortFixturesByPopularityAndCountry(
   fixtures: FixtureResponse[] | undefined
@@ -157,7 +157,7 @@ export default function SelectTeamForm({
   const mutation = useMutation({
     mutationFn: async (data: any) => {
       const res = await authApiClient.post(
-        `/top-score/join/${competition._id}`,
+        `/man-go-set/join/${competition._id}`,
         data
       );
       return res.data;
@@ -168,6 +168,7 @@ export default function SelectTeamForm({
       );
       navigate(`/detio-score/${competition._id}/details`, {
         replace: true,
+        state: competition,
       });
     },
     onError: (error: any) => {
@@ -189,7 +190,7 @@ export default function SelectTeamForm({
     return (
       <Card className="w-full max-w-4xl mx-auto">
         <Loader2 className="animate-spin rounded-full h-8 w-8 mx-auto mb-4" />
-        <p className="text-muted-foreground text-center">Loading matches...</p>
+        <p className="text-muted-foreground">Loading matches...</p>
       </Card>
     );
   }
@@ -213,10 +214,14 @@ export default function SelectTeamForm({
         <CardContent className="px-2">
           <div className="text-sm text-muted-foreground space-y-1">
             <p>
-              • Select between {1} and {competition.requiredTeams} teams to join
-              the competition
+              • Select between {competition.requiredTeams} teams to join the
+              competition
             </p>
             <p>• Star your favorite team to score more points</p>
+            <p>
+              • Star team are unique per competition, no two users can have one
+              star team
+            </p>
           </div>
         </CardContent>
       </Card>
@@ -244,7 +249,7 @@ export default function SelectTeamForm({
         <Button
           onClick={handleSubmit}
           disabled={selectedTeams.size < competition.requiredTeams}
-          className="bg-primary hover:bg-primary/90 w-full"
+          className="bg-primary hover:bg-primary/90"
         >
           {mutation.isPending ? (
             <div className="flex justify-center py-10">

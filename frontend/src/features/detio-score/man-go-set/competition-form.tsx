@@ -209,6 +209,39 @@ export default function CreateManGoSetCompetitionPage() {
             )}
           />
 
+          {/* Start Date */}
+          <FormField
+            control={form.control}
+            name="startDate"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Start Date</FormLabel>
+                <FormControl>
+                  <Input type="date" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          {/* End Date (auto-set from startDate) */}
+          <FormField
+            control={form.control}
+            name="endDate"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>End Date</FormLabel>
+                <FormControl>
+                  <Input type="date" {...field} disabled />
+                </FormControl>
+                <FormDescription>
+                  End date is automatically set to the start date.
+                </FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
           <Button type="submit" className="w-full h-12">
             {mutation.isPending ? (
               <div className="flex justify-center py-10">

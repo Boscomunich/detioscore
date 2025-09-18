@@ -2,6 +2,7 @@ import express from "express";
 import {
   createTopScore,
   fetchActiveTopScoreCompetition,
+  joinTopScoreCompetition,
   uploadValidationProof,
 } from "./controller";
 import multer from "multer";
@@ -17,6 +18,7 @@ router.post(
   uploadValidationProof
 );
 router.post("/create", createTopScore);
+router.post("/join/:competitionId", joinTopScoreCompetition);
 router.get("/active-competition", fetchActiveTopScoreCompetition);
 
 export const topScoreRouter = router;

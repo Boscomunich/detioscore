@@ -18,6 +18,7 @@ export interface Competition {
   entryFee: number;
   prizePool: number;
   participantCap: number;
+  requiredTeams: number;
   participants: Participants[];
   rules: Rule[];
   minParticipants: number;
@@ -44,4 +45,16 @@ export interface ImageUploadStepProps {
   images: UploadedImage[];
   onImagesChange: (images: UploadedImage[]) => void;
   required?: boolean;
+}
+
+export interface TeamSelection {
+  teamId: number;
+  teamName: string;
+  teamLogo: string;
+  isStarred: boolean;
+  opponent: string;
+  matchDate: string;
+  league: string;
+  leagueLogo?: string;
+  matchVenue?: string;
 }
