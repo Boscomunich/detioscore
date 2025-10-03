@@ -5,7 +5,7 @@ import AppError from "../middleware/error";
 import { AuthenticatedRequest } from "../middleware/session";
 import { logger } from "../logger";
 import { generateRandomString } from "better-auth/crypto";
-import { uploadToS3 } from "../file-upload";
+import proofEmitter from "../event-emitter/upload-emitter";
 
 export async function createTopScore(
   req: AuthenticatedRequest,
@@ -60,7 +60,8 @@ export async function joinTopScoreCompetition(
 ) {
   const { competitionId } = req.params;
   const { id: userId } = req.user;
-  const teams = req.body;
+  const incomingTeams = req.body; // array of frontend payloads
+  console.log("Incoming payload:", incomingTeams);
 
   try {
     // Find competition
@@ -78,7 +79,7 @@ export async function joinTopScoreCompetition(
       throw new AppError("Competition participant limit reached", 400);
     }
 
-    // Check if user already joined
+    // Find or create TeamSelection
     let teamSelection = await TeamSelection.findOne({
       competition: competitionId,
       user: userId,
@@ -97,13 +98,13 @@ export async function joinTopScoreCompetition(
     }
 
     // Handle teams from frontend
-    if (!teams || teams.length === 0) {
+    if (!incomingTeams || incomingTeams.length === 0) {
       throw new AppError("You must select at least one team", 400);
     }
 
     if (
-      teams.length < competition.minTeams ||
-      teams.length > competition.maxTeams
+      incomingTeams.length < competition.minTeams ||
+      incomingTeams.length > competition.maxTeams
     ) {
       throw new AppError(
         `You must select between ${competition.minTeams} and ${competition.maxTeams} teams`,
@@ -111,29 +112,52 @@ export async function joinTopScoreCompetition(
       );
     }
 
-    const formattedTeams = teams.map((t: any) => ({
-      teamId: t.teamId,
-      name: t.teamName, // schema expects "name"
-      logo: t.teamLogo,
+    // ✅ Transform to match schema
+    const formattedTeams = incomingTeams.map((t: any) => ({
+      fixtureId: String(t.fixtureId),
+      selectedTeam: {
+        teamId: t.team.id,
+        name: t.team.name,
+        logo: t.team.logo,
+      },
+      opponentTeam: {
+        teamId: t.opponent.id,
+        name: t.opponent.name,
+        logo: t.opponent.logo,
+      },
+      matchVenue: t.matchVenue ?? "",
     }));
 
-    // Extract single star team
-    const starredTeams = teams.filter((t: any) => t.isStarred);
+    // ✅ Extract star team
+    const starredTeams = incomingTeams.filter((t: any) => t.team.isStarred);
     if (starredTeams.length > 1) {
       throw new AppError("You can only star one team", 400);
     }
 
     if (starredTeams.length < 1) {
-      throw new AppError("you must select at least one start team");
+      throw new AppError("You must select at least one star team", 400);
     }
 
     const starTeamId =
-      starredTeams.length === 1 ? starredTeams[0].teamId : null;
+      starredTeams.length === 1 ? starredTeams[0].team.id : null;
 
+    // Ensure star team uniqueness across competition
+    const conflict = await TeamSelection.findOne({
+      competition: competitionId,
+      starTeam: starTeamId,
+      user: { $ne: userId },
+    });
+
+    if (conflict) {
+      throw new AppError(
+        "That star team has already been taken by another participant in this competition.",
+        400
+      );
+    }
+
+    // Save formatted teams + star team
     teamSelection.teams = formattedTeams;
     teamSelection.starTeam = starTeamId;
-
-    await teamSelection.save();
 
     await teamSelection.save();
 
@@ -173,21 +197,17 @@ export async function uploadValidationProof(
   const { competitionId } = req.params;
   const { id: userId } = req.user;
 
-  console.log(req.body);
-
   try {
-    // Ensure files are provided
     if (!req.files || !Array.isArray(req.files) || req.files.length === 0) {
       return res.status(400).json({ message: "No files uploaded" });
     }
 
-    // Parse steps array sent from frontend
     let stepsArray: { id: string; description: string; imageCount: number }[] =
       [];
     if (req.body.steps) {
       try {
         stepsArray = JSON.parse(req.body.steps);
-      } catch (err) {
+      } catch {
         return res.status(400).json({ message: "Invalid steps format" });
       }
     }
@@ -198,54 +218,19 @@ export async function uploadValidationProof(
         .json({ message: "Number of steps must match number of files" });
     }
 
-    // Find or create the user's team selection
-    let teamSelection = await TeamSelection.findOne({
-      competition: competitionId,
-      user: userId,
+    //Emit job immediately
+    proofEmitter.emit("upload-proof", {
+      competitionId,
+      userId,
+      files: req.files as Express.Multer.File[],
+      steps: stepsArray,
     });
 
-    if (!teamSelection) {
-      teamSelection = new TeamSelection({
-        competition: competitionId,
-        user: userId,
-        proofs: [],
-      });
-    }
-
-    // Upload each file to S3 and add to proofs array
-    for (let i = 0; i < req.files.length; i++) {
-      const file = req.files[i] as Express.Multer.File;
-      const stepId = stepsArray[i]!.id;
-
-      const fileUrl = await uploadToS3(
-        file,
-        `competitions/${competitionId}/proofs`
-      );
-
-      teamSelection.proofs.push({
-        step: stepId,
-        url: fileUrl,
-        verified: false,
-      });
-    }
-
-    // update participant array in the competition
-    await Competition.findByIdAndUpdate(
-      competitionId,
-      { $push: { participants: { user: userId, status: "pending" } } },
-      { new: true }
-    );
-
-    // Save the document
-    await teamSelection.save();
-
-    res.status(200).json({
-      message: "Proofs uploaded successfully",
-      proofs: teamSelection.proofs,
+    res.status(202).json({
+      message: "Proof upload queued successfully (delayed response)",
     });
   } catch (error) {
-    console.log(error);
-    logger.error(error);
+    console.error(error);
     next(error);
   }
 }
@@ -259,7 +244,7 @@ export async function fetchActiveTopScoreCompetition(
     const competition = await Competition.find({
       isActive: true,
       type: "TopScore",
-    });
+    }).sort({ createdAt: -1 });
     res.status(200).json(competition);
   } catch (error) {
     logger.error("createTopScore error:", error);

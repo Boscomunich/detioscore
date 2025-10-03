@@ -5,6 +5,8 @@ import morgan from "morgan";
 import helmet from "helmet";
 import cookieParser from "cookie-parser";
 import { toNodeHandler } from "better-auth/node";
+import swaggerUi from "swagger-ui-express";
+import swaggerJsdoc from "swagger-jsdoc";
 
 import { connectToDatabase } from "./src/database";
 
@@ -15,6 +17,9 @@ import { competitionRouter } from "./src/competition/route";
 import globalErrorHandler from "./src/middleware/error-handler";
 import { sessionMiddleware } from "./src/middleware/session";
 import { createAuth } from "./utils/auth";
+import { transactionRouter } from "./src/transaction/route";
+import { notificationRouter } from "./src/notification/route";
+import { userRouter } from "./src/user/route";
 
 dotenv.config();
 
@@ -29,6 +34,32 @@ async function startServer() {
   await connectToDatabase();
 
   const auth = createAuth();
+
+  const options = {
+    definition: {
+      openapi: "3.0.0",
+      info: {
+        title: "Ditio Score API",
+        version: "1.0.0",
+        description: "API documentation for Ditio Score",
+      },
+      servers: [
+        {
+          url: "http://localhost:5000",
+          description: "Local server",
+        },
+        {
+          url: "https://server.ditioscore.com",
+          description: "dev server",
+        },
+      ],
+      components: {},
+      security: [],
+    },
+    apis: ["./src/mango-set/docs.ts"], // Path to your API routes
+  };
+
+  const specs = swaggerJsdoc(options);
 
   const app = express();
   app.use(morgan("dev"));
@@ -61,6 +92,11 @@ async function startServer() {
   app.use("/top-score", sessionMiddleware(auth), topScoreRouter);
   app.use("/man-go-set", sessionMiddleware(auth), manGoSetRouter);
   app.use("/competition", sessionMiddleware(auth), competitionRouter);
+  app.use("/transaction", sessionMiddleware(auth), transactionRouter);
+  app.use("/notification", sessionMiddleware(auth), notificationRouter);
+  app.use("/user", sessionMiddleware(auth), userRouter);
+
+  app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(specs));
 
   app.use(globalErrorHandler);
 

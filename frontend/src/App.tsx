@@ -15,6 +15,15 @@ import CreateManGoSetCompetitionPage from "./features/detio-score/man-go-set/com
 import JoinTopScore from "./features/detio-score/top-score/join-competition";
 import CompetitionInfo from "./features/detio-score/info";
 import JoinManGoSet from "./features/detio-score/man-go-set/join-competition";
+import { DepositPage } from "./features/transaction/deposit";
+import { TransactionHistory } from "./features/transaction/history";
+import { WithdrawalPage } from "./features/transaction/withdraw";
+import { ForgotPasswordForm } from "./features/auth/forgot";
+import { ResetPasswordForm } from "./features/auth/reset";
+import { NotificationsPage } from "./features/profile/notification";
+import { EmailVerificationPage } from "./features/auth/verify-email";
+import { UserTeamInfoPage } from "./features/detio-score/ranking-details";
+import LeagueDetails from "./features/league/details";
 
 function ScrollToTop() {
   const { pathname } = useLocation();
@@ -45,16 +54,29 @@ function App() {
           <Route path="detio-score/topscore/:id" element={<JoinTopScore />} />
           <Route path="detio-score/:id/details" element={<CompetitionInfo />} />
           <Route
+            path="detio-score/participant"
+            element={<UserTeamInfoPage />}
+          />
+          <Route
             path="detio-score/mango-set/create-new-competition"
             element={<CreateManGoSetCompetitionPage />}
           />
           <Route path="detio-score/mangoset/:id" element={<JoinManGoSet />} />
+
           <Route path="favourite" element={<Favourite />} />
           <Route path="league" element={<League />} />
+          <Route path="league/:leagueName" element={<LeagueDetails />} />
           <Route path="profile" element={<Profile />} />
+          <Route path="deposit" element={<DepositPage />} />
+          <Route path="withdraw" element={<WithdrawalPage />} />
+          <Route path="transaction-history" element={<TransactionHistory />} />
+          <Route path="notifications" element={<NotificationsPage />} />
 
           <Route path="signup" element={<SignupForm />} />
           <Route path="signin" element={<SigninForm />} />
+          <Route path="forgot-password" element={<ForgotPasswordForm />} />
+          <Route path="reset-password" element={<ResetPasswordForm />} />
+          <Route path="verify-email" element={<EmailVerificationPage />} />
 
           <Route path="*" element={<div>Not Found</div>} />
         </Route>

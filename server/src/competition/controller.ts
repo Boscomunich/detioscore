@@ -141,3 +141,35 @@ export async function fetchCompetitionWithTeamsAndUserData(
     next(new AppError("Failed to fetch competition details", 500));
   }
 }
+
+export async function fetchCompetitionsByUser(
+  req: AuthenticatedRequest,
+  res: Response,
+  next: NextFunction
+) {
+  try {
+    const userId = req.user?.id;
+    console.log("User ID:", userId);
+
+    const { status } = req.query;
+    let isActive: boolean | undefined;
+
+    if (status === "active") {
+      isActive = true;
+    } else if (status === "inactive") {
+      isActive = false;
+    }
+
+    const query: any = { "participants.user": userId };
+    if (isActive !== undefined) {
+      query.isActive = isActive;
+    }
+
+    const competitions = await Competition.find(query).sort({ createdAt: -1 });
+
+    res.status(200).json(competitions);
+  } catch (error) {
+    logger.error("fetchCompetitionsByUser error:", error);
+    next(new AppError("Failed to fetch competitions", 500));
+  }
+}

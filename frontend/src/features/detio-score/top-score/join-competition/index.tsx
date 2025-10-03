@@ -2,21 +2,17 @@ import { useEffect, useState } from "react";
 import CompetitionRule from "./rules";
 import { Link, useLocation } from "react-router";
 import { UploadProof } from "./upload-proof";
-import SelectTeamForm from "./join-competition-form";
+import SelectTeamForm from "../../team-selection";
 
 export default function JoinTopScore() {
   const [step, setStep] = useState(1);
   const { state } = useLocation();
 
   useEffect(() => {
-    if (
-      state?.userStatus === "pending" ||
-      state.competition.rules.length === 0 ||
-      state.userStatus === "owner"
-    ) {
+    if (state?.userStatus === "pending" || state.userStatus === "owner") {
       setStep(3);
     }
-  }, [state?.userStatus, state.competition]);
+  }, [state?.userStatus, state?.competition]);
 
   return (
     <div className="h-full min-h-[80vh] w-[95%] flex flex-col justify-center items-center max-w-4xl border rounded-sm my-2 mb-24 py-6 mx-auto px-2 md:px-6">
@@ -32,11 +28,13 @@ export default function JoinTopScore() {
           <p className="text-[14px]">Your game Your score.</p>
         </div>
       </Link>
-      <div className=" text-4xl font-bold gap-2 my-6">
-        Hosted TopScore{" "}
-        <span className="text-[14px] text-[#1E64AA]">
-          {state.competition.prizePool} DC Price
-        </span>
+      <div className="my-6 font-bold capitalize">
+        <div className=" text-xl md:text-2xl gap-2">
+          {state?.competition.name} TopScore{" "}
+        </div>
+        <div className="text-[14px] text-[#1E64AA]">
+          {state?.competition.prizePool} DC Price
+        </div>
       </div>
       {step === 1 ? (
         <CompetitionRule setStep={setStep} competition={state?.competition} />

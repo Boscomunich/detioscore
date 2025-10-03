@@ -58,7 +58,8 @@ export async function joinManGoSetCompetition(
 ) {
   const { competitionId } = req.params;
   const { id: userId } = req.user;
-  const teams = req.body;
+  const incomingTeams = req.body;
+  console.log("Incoming payload:", incomingTeams);
 
   try {
     // Find competition
@@ -76,7 +77,7 @@ export async function joinManGoSetCompetition(
       throw new AppError("Competition participant limit reached", 400);
     }
 
-    // Check if user already joined
+    // Find or create TeamSelection
     let teamSelection = await TeamSelection.findOne({
       competition: competitionId,
       user: userId,
@@ -95,13 +96,13 @@ export async function joinManGoSetCompetition(
     }
 
     // Handle teams from frontend
-    if (!teams || teams.length === 0) {
+    if (!incomingTeams || incomingTeams.length === 0) {
       throw new AppError("You must select at least one team", 400);
     }
 
     if (
-      teams.length < competition.minTeams ||
-      teams.length > competition.maxTeams
+      incomingTeams.length < competition.minTeams ||
+      incomingTeams.length > competition.maxTeams
     ) {
       throw new AppError(
         `You must select between ${competition.minTeams} and ${competition.maxTeams} teams`,
@@ -109,29 +110,52 @@ export async function joinManGoSetCompetition(
       );
     }
 
-    const formattedTeams = teams.map((t: any) => ({
-      teamId: t.teamId,
-      name: t.teamName, // schema expects "name"
-      logo: t.teamLogo,
+    // ✅ Transform to match schema
+    const formattedTeams = incomingTeams.map((t: any) => ({
+      fixtureId: String(t.fixtureId),
+      selectedTeam: {
+        teamId: t.team.id,
+        name: t.team.name,
+        logo: t.team.logo,
+      },
+      opponentTeam: {
+        teamId: t.opponent.id,
+        name: t.opponent.name,
+        logo: t.opponent.logo,
+      },
+      matchVenue: t.matchVenue ?? "",
     }));
 
-    // Extract single star team
-    const starredTeams = teams.filter((t: any) => t.isStarred);
+    // ✅ Extract star team
+    const starredTeams = incomingTeams.filter((t: any) => t.team.isStarred);
     if (starredTeams.length > 1) {
       throw new AppError("You can only star one team", 400);
     }
 
     if (starredTeams.length < 1) {
-      throw new AppError("you must select at least one start team");
+      throw new AppError("You must select at least one star team", 400);
     }
 
     const starTeamId =
-      starredTeams.length === 1 ? starredTeams[0].teamId : null;
+      starredTeams.length === 1 ? starredTeams[0].team.id : null;
 
+    // Ensure star team uniqueness across competition
+    const conflict = await TeamSelection.findOne({
+      competition: competitionId,
+      starTeam: starTeamId,
+      user: { $ne: userId },
+    });
+
+    if (conflict) {
+      throw new AppError(
+        "That star team has already been taken by another participant in this competition.",
+        400
+      );
+    }
+
+    // Save formatted teams + star team
     teamSelection.teams = formattedTeams;
     teamSelection.starTeam = starTeamId;
-
-    await teamSelection.save();
 
     await teamSelection.save();
 
@@ -162,7 +186,6 @@ export async function joinManGoSetCompetition(
     next(error);
   }
 }
-
 export async function fetchActiveManGoSetCompetition(
   req: AuthenticatedRequest,
   res: Response,
@@ -172,7 +195,7 @@ export async function fetchActiveManGoSetCompetition(
     const competition = await Competition.find({
       isActive: true,
       type: "ManGoSet",
-    });
+    }).sort({ createdAt: -1 });
     res.status(200).json(competition);
   } catch (error) {
     logger.error("createTopScore error:", error);

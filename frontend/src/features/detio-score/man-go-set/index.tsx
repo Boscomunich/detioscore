@@ -23,7 +23,7 @@ export default function ManGoSet() {
   const { data: session } = authClient.useSession();
 
   return (
-    <div className="relative w-full h-screen flex flex-col items-center justify-start">
+    <div className="relative w-full min-h-screen flex flex-col items-center">
       <div className="w-[95%] md:w-[80%]">
         {isLoading
           ? [...Array(5)].map((_, i) => (
@@ -38,7 +38,7 @@ export default function ManGoSet() {
             ))}
       </div>
       <Button
-        className="h-12 px-4 max-w-xl w-[95%] fixed bottom-18 text-white"
+        className="h-12 px-4 max-w-xl w-[95%] fixed bottom-24 text-white"
         onClick={() => navigate("mango-set/create-new-competition")}
       >
         Create new competition

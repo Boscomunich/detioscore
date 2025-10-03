@@ -18,6 +18,7 @@ import { authApiClient } from "@/api-config";
 import { toast } from "sonner";
 import { Loader } from "lucide-react";
 import { useEffect } from "react";
+import { useNavigate } from "react-router";
 
 const formSchema = z.object({
   name: z.string().min(3, { message: "Competition name is too short" }),
@@ -37,6 +38,8 @@ const formSchema = z.object({
 });
 
 export default function CreateManGoSetCompetitionPage() {
+  const navigate = useNavigate();
+
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -78,181 +81,189 @@ export default function CreateManGoSetCompetitionPage() {
   }
 
   return (
-    <div className="h-full min-h-[80vh] w-[95%] flex flex-col justify-center items-center max-w-4xl border rounded-sm my-2 mb-24 py-6 mx-auto px-6">
-      <h1 className="text-2xl font-bold mb-6">Host a Man Go Set</h1>
-      <Form {...form}>
-        <form
-          onSubmit={form.handleSubmit(onSubmit)}
-          className="space-y-4 w-full max-w-xl"
-        >
-          <FormDescription className="text-center">
-            Fill in the details below to create and host a new Man Go Set
-            competition. You can set the name, stake, and other requirements
-          </FormDescription>
+    <>
+      <div
+        className="text-sm w-[95%] max-w-4xl mx-auto font-[400] px-6 cursor-pointer"
+        onClick={() => navigate(-1)}
+      >
+        ← Back
+      </div>
+      <div className="h-full min-h-[80vh] w-[95%] flex flex-col justify-center items-center max-w-4xl border rounded-sm my-2 mb-24 py-6 mx-auto px-6">
+        <h1 className="text-2xl font-bold mb-6">Host a Man Go Set</h1>
+        <Form {...form}>
+          <form
+            onSubmit={form.handleSubmit(onSubmit)}
+            className="space-y-4 w-full max-w-xl"
+          >
+            <FormDescription className="text-center">
+              Fill in the details below to create and host a new Man Go Set
+              competition. You can set the name, stake, and other requirements
+            </FormDescription>
 
-          {/* Competition Name */}
-          <FormField
-            control={form.control}
-            name="name"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Competition Name</FormLabel>
-                <FormControl>
-                  <Input placeholder="Enter competition name" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+            {/* Competition Name */}
+            <FormField
+              control={form.control}
+              name="name"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Competition Name</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Enter competition name" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
-          {/* Number of Teams */}
-          <FormField
-            control={form.control}
-            name="numberOfTeams"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Number of Teams</FormLabel>
-                <FormControl>
-                  <Input
-                    type="number"
-                    value={field.value}
-                    onChange={(e) => field.onChange(+e.target.value)}
-                  />
-                </FormControl>
-                <FormDescription>
-                  Number of teams each participant must select.
-                </FormDescription>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+            {/* Number of Teams */}
+            <FormField
+              control={form.control}
+              name="numberOfTeams"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Number of Teams</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="number"
+                      value={field.value}
+                      onChange={(e) => field.onChange(+e.target.value)}
+                    />
+                  </FormControl>
+                  <FormDescription>
+                    Number of teams each participant must select.
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
-          {/* Participant Cap */}
-          <FormField
-            control={form.control}
-            name="participantCap"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Participant Cap</FormLabel>
-                <FormControl>
-                  <Input
-                    type="number"
-                    value={field.value}
-                    onChange={(e) => field.onChange(+e.target.value)}
-                  />
-                </FormControl>
-                <FormDescription>
-                  Maximum participants allowed. Default is 100.
-                </FormDescription>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+            {/* Participant Cap */}
+            <FormField
+              control={form.control}
+              name="participantCap"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Participant Cap</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="number"
+                      value={field.value}
+                      onChange={(e) => field.onChange(+e.target.value)}
+                    />
+                  </FormControl>
+                  <FormDescription>
+                    Maximum participants allowed. Default is 100.
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
-          {/* Prize */}
-          <FormField
-            control={form.control}
-            name="stake"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Stake (Ditiocoins)</FormLabel>
-                <FormControl>
-                  <Input
-                    type="number"
-                    value={field.value}
-                    onChange={(e) => field.onChange(+e.target.value)}
-                  />
-                </FormControl>
-                <FormDescription>
-                  The coin to stake to enter the competition. Minimum is 1
-                  Ditiocoin. any stake you enter will be the benchmark for
-                  others to follow.
-                </FormDescription>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+            {/* Prize */}
+            <FormField
+              control={form.control}
+              name="stake"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Stake (Ditiocoins)</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="number"
+                      value={field.value}
+                      onChange={(e) => field.onChange(+e.target.value)}
+                    />
+                  </FormControl>
+                  <FormDescription>
+                    The coin to stake to enter the competition. Minimum is 1
+                    Ditiocoin. any stake you enter will be the benchmark for
+                    others to follow.
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
-          {/* Competition Visibility */}
-          <FormField
-            control={form.control}
-            name="visibility"
-            render={({ field }) => (
-              <FormItem className="space-y-3">
-                <FormLabel>Competition Visibility</FormLabel>
-                <FormControl>
-                  <RadioGroup
-                    onValueChange={field.onChange}
-                    defaultValue={field.value}
-                    className="flex flex-col space-y-1"
-                  >
-                    <FormItem className="flex items-center space-x-3 space-y-0">
-                      <FormControl>
-                        <RadioGroupItem value="public" />
-                      </FormControl>
-                      <FormLabel className="font-normal">
-                        Public - Anyone can join
-                      </FormLabel>
-                    </FormItem>
-                    <FormItem className="flex items-center space-x-3 space-y-0">
-                      <FormControl>
-                        <RadioGroupItem value="private" />
-                      </FormControl>
-                      <FormLabel className="font-normal">
-                        Private - Invite only
-                      </FormLabel>
-                    </FormItem>
-                  </RadioGroup>
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+            {/* Competition Visibility */}
+            <FormField
+              control={form.control}
+              name="visibility"
+              render={({ field }) => (
+                <FormItem className="space-y-3">
+                  <FormLabel>Competition Visibility</FormLabel>
+                  <FormControl>
+                    <RadioGroup
+                      onValueChange={field.onChange}
+                      defaultValue={field.value}
+                      className="flex flex-col space-y-1"
+                    >
+                      <FormItem className="flex items-center space-x-3 space-y-0">
+                        <FormControl>
+                          <RadioGroupItem value="public" />
+                        </FormControl>
+                        <FormLabel className="font-normal">
+                          Public - Anyone can join
+                        </FormLabel>
+                      </FormItem>
+                      <FormItem className="flex items-center space-x-3 space-y-0">
+                        <FormControl>
+                          <RadioGroupItem value="private" />
+                        </FormControl>
+                        <FormLabel className="font-normal">
+                          Private - Invite only
+                        </FormLabel>
+                      </FormItem>
+                    </RadioGroup>
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
-          {/* Start Date */}
-          <FormField
-            control={form.control}
-            name="startDate"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Start Date</FormLabel>
-                <FormControl>
-                  <Input type="date" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+            {/* Start Date */}
+            <FormField
+              control={form.control}
+              name="startDate"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Start Date</FormLabel>
+                  <FormControl>
+                    <Input type="date" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
-          {/* End Date (auto-set from startDate) */}
-          <FormField
-            control={form.control}
-            name="endDate"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>End Date</FormLabel>
-                <FormControl>
-                  <Input type="date" {...field} disabled />
-                </FormControl>
-                <FormDescription>
-                  End date is automatically set to the start date.
-                </FormDescription>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+            {/* End Date (auto-set from startDate) */}
+            <FormField
+              control={form.control}
+              name="endDate"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>End Date</FormLabel>
+                  <FormControl>
+                    <Input type="date" {...field} disabled />
+                  </FormControl>
+                  <FormDescription>
+                    End date is automatically set to the start date.
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
-          <Button type="submit" className="w-full h-12">
-            {mutation.isPending ? (
-              <div className="flex justify-center py-10">
-                <Loader className="w-8 h-8 animate-spin text-white" />
-              </div>
-            ) : (
-              "Create Competition"
-            )}
-          </Button>
-        </form>
-      </Form>
-    </div>
+            <Button type="submit" className="w-full h-12">
+              {mutation.isPending ? (
+                <div className="flex justify-center py-10">
+                  <Loader className="w-8 h-8 animate-spin text-white" />
+                </div>
+              ) : (
+                "Create Competition"
+              )}
+            </Button>
+          </form>
+        </Form>
+      </div>
+    </>
   );
 }

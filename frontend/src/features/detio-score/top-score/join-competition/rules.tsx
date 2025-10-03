@@ -47,6 +47,17 @@ export default function CompetitionRule({
   setStep,
   competition,
 }: CompetitionRuleProps) {
+  const hasStepVerification = competition.rules.some(
+    (rule: any) => rule.stepVerification
+  );
+
+  function setNextStep() {
+    if (!hasStepVerification) {
+      setStep((prev) => prev + 2);
+    } else {
+      setStep((prev) => prev + 1);
+    }
+  }
   return (
     <div className="w-full flex flex-col items-center gap-4 mb-16">
       <div className="w-[70%] max-w-[500px] text-center text-xl">
@@ -95,7 +106,7 @@ export default function CompetitionRule({
           </CardHeader>
           <CardContent className="p-6 space-y-4">
             <div className="grid gap-4">
-              {competition.rules.map((rule, index: number) => (
+              {competition?.rules.map((rule, index: number) => (
                 <div className="flex items-start gap-3" key={index}>
                   <CheckCircle className="h-5 w-5 text-green-600 mt-0.5 flex-shrink-0" />
                   <div>
@@ -113,10 +124,7 @@ export default function CompetitionRule({
           </CardContent>
         </Card>
       </div>
-      <Button
-        onClick={() => setStep((prev) => prev + 1)}
-        className="w-full h-12 z-100"
-      >
+      <Button onClick={() => setNextStep()} className="w-full h-12 z-100">
         Continue
       </Button>
     </div>

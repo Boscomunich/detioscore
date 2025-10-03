@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useLocation } from "react-router";
 import CompetitionRule from "./rule";
-import SelectTeamForm from "./join-competition-form";
+import SelectTeamForm from "../../team-selection";
 
 export default function JoinManGoSet() {
   const [step, setStep] = useState(1);
@@ -14,7 +14,7 @@ export default function JoinManGoSet() {
   }, [state?.userStatus, state.competition]);
 
   return (
-    <div className="h-full min-h-[80vh] w-[95%] flex flex-col justify-center items-center max-w-4xl border rounded-sm my-2 mb-24 py-6 mx-auto px-6">
+    <div className="h-full min-h-[80vh] w-[95%] flex flex-col justify-center items-center max-w-4xl border rounded-sm my-2 mb-24 py-6 mx-auto px-2 md:px-6">
       <Link
         to=""
         className=" text-4xl font-bold flex justify-center gap-2 items-center my-6"
@@ -27,11 +27,13 @@ export default function JoinManGoSet() {
           <p className="text-[14px]">Your game Your score.</p>
         </div>
       </Link>
-      <div className=" text-4xl font-bold gap-2 my-6">
-        Hosted Mango Set{" "}
-        <span className="text-[14px] text-[#1E64AA]">
+      <div className="my-6 font-bold capitalize">
+        <div className=" text-xl md:text-2xl gap-2">
+          {state.competition.name} Mango set{" "}
+        </div>
+        <div className="text-[14px] text-[#1E64AA]">
           {state.competition.prizePool} DC Price
-        </span>
+        </div>
       </div>
       {step === 1 ? (
         <CompetitionRule setStep={setStep} competition={state?.competition} />

@@ -6,9 +6,11 @@ import { useNavigate } from "react-router";
 import { Badge } from "@/components/ui/badge";
 import { LazyLoadImage } from "react-lazy-load-image-component";
 import type { FixtureResponse } from "./type";
+import { useLeague } from "../hooks/use-leagues";
 
 export default function ScoreCard({ fixture }: { fixture: FixtureResponse }) {
   const navigate = useNavigate();
+  const { favouriteIds, toggleFavourite } = useLeague();
 
   const status = fixture.fixture.status.short;
   const elapsed = fixture.fixture.status.elapsed;
@@ -28,7 +30,6 @@ export default function ScoreCard({ fixture }: { fixture: FixtureResponse }) {
   const isCancelled = ["CANC", "ABD", "AWD", "WO"].includes(status);
   const showScores = (isLive || isFinished) && !isCancelled;
 
-  //useCallback to memoize the function and avoid re-creation on each render optimizing performance
   const formatTime = useCallback((dateString: string) => {
     const date = new Date(dateString);
     return date.toLocaleTimeString("en-US", {
@@ -38,7 +39,6 @@ export default function ScoreCard({ fixture }: { fixture: FixtureResponse }) {
     });
   }, []);
 
-  //
   const getStatusDisplay = useCallback(() => {
     const statusConfig: Record<
       string,
@@ -85,6 +85,8 @@ export default function ScoreCard({ fixture }: { fixture: FixtureResponse }) {
       </div>
     );
   }, [status, isLive, isCancelled, elapsed, fixture.fixture.date, formatTime]);
+
+  const isFavourite = favouriteIds.has(fixture.fixture.id);
 
   return (
     <div
@@ -137,9 +139,22 @@ export default function ScoreCard({ fixture }: { fixture: FixtureResponse }) {
         </div>
       </div>
 
-      {/* Favorite Button */}
-      <Button variant="ghost" size="sm" className="p-1 h-auto">
-        <Star className={cn("w-5 h-5text-muted-foreground")} />
+      {/* Favourite Button */}
+      <Button
+        variant="ghost"
+        size="sm"
+        className="p-1 h-auto"
+        onClick={(e) => {
+          e.stopPropagation();
+          toggleFavourite(undefined, fixture);
+        }}
+      >
+        <Star
+          className={cn(
+            "w-5 h-5",
+            isFavourite ? "text-yellow-400" : "text-muted-foreground"
+          )}
+        />
       </Button>
     </div>
   );

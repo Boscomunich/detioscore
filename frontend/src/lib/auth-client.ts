@@ -1,4 +1,5 @@
 import { createAuthClient } from "better-auth/react";
+import { jwtClient } from "better-auth/client/plugins";
 
 let url;
 
@@ -13,4 +14,5 @@ if (
 
 export const authClient = createAuthClient({
   baseURL: url,
+  plugins: [jwtClient()],
 });

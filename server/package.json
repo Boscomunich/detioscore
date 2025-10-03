@@ -29,8 +29,11 @@
     "morgan": "^1.10.1",
     "multer": "^2.0.2",
     "node-cron": "^4.2.1",
-    "nodemailer": "^7.0.5",
+    "nodemailer": "^7.0.6",
+    "poolifier": "^5.1.6",
     "redis": "^5.7.0",
+    "swagger-jsdoc": "^6.2.8",
+    "swagger-ui-express": "^5.0.1",
     "winston": "^3.17.0"
   },
   "devDependencies": {
@@ -43,6 +46,9 @@
     "@types/morgan": "^1.9.10",
     "@types/multer": "^2.0.0",
     "@types/node": "^24.2.0",
+    "@types/nodemailer": "^7.0.1",
+    "@types/swagger-jsdoc": "^6.0.4",
+    "@types/swagger-ui-express": "^4.1.8",
     "nodemon": "^3.1.10",
     "ts-node": "^10.9.2",
     "tsx": "^4.20.3",

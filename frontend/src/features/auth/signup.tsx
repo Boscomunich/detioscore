@@ -240,7 +240,7 @@ export function SignupForm() {
         <hr className="flex-1 border-gray-300" />
       </div>
       <Button
-        className="w-full border bg-transparent flex items-center justify-center text-xl font-semibold h-14 text-foreground"
+        className="w-full border bg-transparent flex items-center justify-center text-xl font-semibold h-14 text-foreground active:scale-105"
         onClick={() => signInWithGoogle()}
       >
         <img src="/icons/google.png" alt="Google" className="w-7 h-7 mr-2" />

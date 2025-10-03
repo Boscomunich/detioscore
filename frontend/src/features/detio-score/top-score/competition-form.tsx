@@ -19,6 +19,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useMutation } from "@tanstack/react-query";
 import { authApiClient } from "@/api-config";
 import { toast } from "sonner";
+import { useNavigate } from "react-router";
 
 const formSchema = z.object({
   name: z.string().min(3, { message: "Competition name is too short" }),
@@ -58,6 +59,8 @@ export default function CreateTopScoreCompetitionPage() {
       stepVerification: boolean;
     }[]
   >([]);
+
+  const navigate = useNavigate();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -113,7 +116,6 @@ export default function CreateTopScoreCompetitionPage() {
       return res.data;
     },
     onSuccess: () => {
-      // Maybe reset form, redirect, or show success toast
       form.reset();
       toast.success("Competition created successfully!");
     },
@@ -129,237 +131,263 @@ export default function CreateTopScoreCompetitionPage() {
   }
 
   return (
-    <div className="h-full min-h-[80vh] w-[95%] flex flex-col justify-center items-center max-w-4xl border rounded-sm my-2 mb-24 py-6 mx-auto px-6">
-      <h1 className="text-2xl font-bold mb-6">Host a TopScore Competition</h1>
-      <Form {...form}>
-        <form
-          onSubmit={form.handleSubmit(onSubmit)}
-          className="space-y-4 w-full max-w-xl"
-        >
-          <FormDescription className="text-center">
-            Fill in the details below to create and host a new TopScore
-            competition. You can set the name, rules, and other requirements
-          </FormDescription>
-
-          {/* Competition Name */}
-          <FormField
-            control={form.control}
-            name="name"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Competition Name</FormLabel>
-                <FormControl>
-                  <Input placeholder="Enter competition name" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          {/* Number of Teams */}
-          <FormField
-            control={form.control}
-            name="numberOfTeams"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Number of Teams</FormLabel>
-                <FormControl>
-                  <Input
-                    type="number"
-                    value={field.value}
-                    onChange={(e) => field.onChange(+e.target.value)}
-                  />
-                </FormControl>
-                <FormDescription>
-                  Number of teams each participant must select.
-                </FormDescription>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          {/* Participant Cap */}
-          <FormField
-            control={form.control}
-            name="participantCap"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Participant Cap</FormLabel>
-                <FormControl>
-                  <Input
-                    type="number"
-                    value={field.value}
-                    onChange={(e) => field.onChange(+e.target.value)}
-                  />
-                </FormControl>
-                <FormDescription>
-                  Maximum participants allowed. Default is 100.
-                </FormDescription>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          {/* Prize */}
-          <FormField
-            control={form.control}
-            name="price"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Prize (Ditiocoins)</FormLabel>
-                <FormControl>
-                  <Input
-                    type="number"
-                    value={field.value}
-                    onChange={(e) => field.onChange(+e.target.value)}
-                  />
-                </FormControl>
-                <FormDescription>
-                  Prize money for the winner, deducted from your wallet.
-                </FormDescription>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          {/* Competition Visibility */}
-          <FormField
-            control={form.control}
-            name="visibility"
-            render={({ field }) => (
-              <FormItem className="space-y-3">
-                <FormLabel>Competition Visibility</FormLabel>
-                <FormControl>
-                  <RadioGroup
-                    onValueChange={field.onChange}
-                    defaultValue={field.value}
-                    className="flex flex-col space-y-1"
-                  >
-                    <FormItem className="flex items-center space-x-3 space-y-0">
-                      <FormControl>
-                        <RadioGroupItem value="public" />
-                      </FormControl>
-                      <FormLabel className="font-normal">
-                        Public - Anyone can join
-                      </FormLabel>
-                    </FormItem>
-                    <FormItem className="flex items-center space-x-3 space-y-0">
-                      <FormControl>
-                        <RadioGroupItem value="private" />
-                      </FormControl>
-                      <FormLabel className="font-normal">
-                        Private - Invite only
-                      </FormLabel>
-                    </FormItem>
-                  </RadioGroup>
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          {/* Rules Section */}
-          <div>
-            <FormLabel>Competition Rules</FormLabel>
-
-            {/* Display added rules */}
-            <div className="flex flex-wrap gap-2 my-2">
-              {rules.map((rule) => (
-                <div
-                  key={rule.step}
-                  className="flex items-center gap-2 justify-between border rounded-md p-2"
-                >
-                  <div>
-                    <p className="font-medium text-[12px]">
-                      Step {rule.step}: {rule.description}
-                    </p>
-                    {rule.stepVerification && (
-                      <p className="text-xs text-gray-500">
-                        Verification required
-                      </p>
-                    )}
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => handleRemoveRule(rule.step)}
-                    className="text-red-500 hover:text-red-700"
-                  >
-                    <X size={16} />
-                  </button>
-                </div>
-              ))}
-            </div>
-
-            {/* Input with Add button */}
-            <div className="flex gap-2 items-center">
-              <Input
-                placeholder="Enter a rule description"
-                value={ruleDescription}
-                onChange={(e) => setRuleDescription(e.target.value)}
-              />
-              <Button type="button" onClick={handleAddRule}>
-                Add
-              </Button>
-            </div>
-
-            {/* Verification Toggle */}
-            <div className="flex items-center gap-2 mt-2">
-              <Switch
-                checked={verificationRequired}
-                onCheckedChange={setVerificationRequired}
-              />
-              <span className="text-sm">Require verification</span>
-            </div>
-
-            <FormDescription>
-              Add as many rules (steps) as you like. Each must be unique.
+    <>
+      <div
+        className="text-sm w-[95%] max-w-4xl mx-auto font-[400] px-6 cursor-pointer"
+        onClick={() => navigate(-1)}
+      >
+        ← Back
+      </div>
+      <div className="h-full min-h-[80vh] w-[95%] flex flex-col justify-center items-center max-w-4xl border rounded-sm my-2 mb-24 py-6 mx-auto px-6">
+        <h1 className="text-2xl font-bold mb-6">Host a TopScore Competition</h1>
+        <Form {...form}>
+          <form
+            onSubmit={form.handleSubmit(onSubmit)}
+            className="space-y-4 w-full max-w-xl"
+          >
+            <FormDescription className="text-center">
+              Fill in the details below to create and host a new TopScore
+              competition. You can set the name, rules, and other requirements
             </FormDescription>
-          </div>
 
-          {/* Start Date */}
-          <FormField
-            control={form.control}
-            name="startDate"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Start Date</FormLabel>
-                <FormControl>
-                  <Input type="date" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+            {/* Competition Name */}
+            <FormField
+              control={form.control}
+              name="name"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Competition Name</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Enter competition name" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
-          {/* End Date (auto-set from startDate) */}
-          <FormField
-            control={form.control}
-            name="endDate"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>End Date</FormLabel>
-                <FormControl>
-                  <Input type="date" {...field} disabled />
-                </FormControl>
-                <FormDescription>
-                  End date is automatically set to the start date.
-                </FormDescription>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+            {/* Number of Teams */}
+            <FormField
+              control={form.control}
+              name="numberOfTeams"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Number of Teams</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="number"
+                      value={field.value ?? ""}
+                      onChange={(e) =>
+                        field.onChange(
+                          e.target.value === ""
+                            ? undefined
+                            : Number(e.target.value)
+                        )
+                      }
+                    />
+                  </FormControl>
+                  <FormDescription>
+                    Number of teams each participant must select.
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
-          <Button type="submit" className="w-full h-12">
-            {mutation.isPending ? (
-              <div className="flex justify-center py-10">
-                <Loader className="w-8 h-8 animate-spin text-white" />
+            {/* Participant Cap */}
+            <FormField
+              control={form.control}
+              name="participantCap"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Participant Cap</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="number"
+                      value={field.value ?? ""}
+                      onChange={(e) =>
+                        field.onChange(
+                          e.target.value === ""
+                            ? undefined
+                            : Number(e.target.value)
+                        )
+                      }
+                    />
+                  </FormControl>
+                  <FormDescription>
+                    Maximum participants allowed. Default is 100.
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            {/* Prize */}
+            <FormField
+              control={form.control}
+              name="price"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Prize (Ditiocoins)</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="number"
+                      value={field.value ?? ""}
+                      onChange={(e) =>
+                        field.onChange(
+                          e.target.value === ""
+                            ? undefined
+                            : Number(e.target.value)
+                        )
+                      }
+                    />
+                  </FormControl>
+                  <FormDescription>
+                    Prize money for the winner, deducted from your wallet.
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            {/* Competition Visibility */}
+            <FormField
+              control={form.control}
+              name="visibility"
+              render={({ field }) => (
+                <FormItem className="space-y-3">
+                  <FormLabel>Competition Visibility</FormLabel>
+                  <FormControl>
+                    <RadioGroup
+                      onValueChange={field.onChange}
+                      defaultValue={field.value}
+                      className="flex flex-col space-y-1"
+                    >
+                      <FormItem className="flex items-center space-x-3 space-y-0">
+                        <FormControl>
+                          <RadioGroupItem value="public" />
+                        </FormControl>
+                        <FormLabel className="font-normal">
+                          Public - Anyone can join
+                        </FormLabel>
+                      </FormItem>
+                      <FormItem className="flex items-center space-x-3 space-y-0">
+                        <FormControl>
+                          <RadioGroupItem value="private" />
+                        </FormControl>
+                        <FormLabel className="font-normal">
+                          Private - Invite only
+                        </FormLabel>
+                      </FormItem>
+                    </RadioGroup>
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            {/* Rules Section */}
+            <div>
+              <FormLabel>Competition Rules</FormLabel>
+
+              {/* Display added rules */}
+              <div className="flex flex-wrap gap-2 my-2">
+                {rules.map((rule) => (
+                  <div
+                    key={rule.step}
+                    className="flex items-center gap-2 justify-between border rounded-md p-2"
+                  >
+                    <div>
+                      <p className="font-medium text-[12px]">
+                        Step {rule.step}: {rule.description}
+                      </p>
+                      {rule.stepVerification && (
+                        <p className="text-xs text-gray-500">
+                          Verification required
+                        </p>
+                      )}
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveRule(rule.step)}
+                      className="text-red-500 hover:text-red-700"
+                    >
+                      <X size={16} />
+                    </button>
+                  </div>
+                ))}
               </div>
-            ) : (
-              "Create Competition"
-            )}
-          </Button>
-        </form>
-      </Form>
-    </div>
+
+              {/* Input with Add button */}
+              <div className="flex gap-2 items-center">
+                <Input
+                  placeholder="Enter a rule description"
+                  value={ruleDescription}
+                  onChange={(e) => setRuleDescription(e.target.value)}
+                />
+                <Button type="button" onClick={handleAddRule}>
+                  Add
+                </Button>
+              </div>
+
+              {/* Verification Toggle */}
+              <div className="flex items-center gap-2 mt-2">
+                <Switch
+                  checked={verificationRequired}
+                  onCheckedChange={setVerificationRequired}
+                />
+                <span className="text-sm">Require verification</span>
+              </div>
+
+              <FormDescription>
+                Add as many rules (steps) as you like. Each must be unique.
+              </FormDescription>
+            </div>
+
+            {/* Start Date */}
+            <FormField
+              control={form.control}
+              name="startDate"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Start Date</FormLabel>
+                  <FormControl>
+                    <Input type="date" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            {/* End Date (auto-set from startDate) */}
+            <FormField
+              control={form.control}
+              name="endDate"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>End Date</FormLabel>
+                  <FormControl>
+                    <Input type="date" {...field} disabled />
+                  </FormControl>
+                  <FormDescription>
+                    End date is automatically set to the start date.
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <Button type="submit" className="w-full h-12">
+              {mutation.isPending ? (
+                <div className="flex justify-center py-10">
+                  <Loader className="w-8 h-8 animate-spin text-white" />
+                </div>
+              ) : (
+                "Create Competition"
+              )}
+            </Button>
+          </form>
+        </Form>
+      </div>
+    </>
   );
 }

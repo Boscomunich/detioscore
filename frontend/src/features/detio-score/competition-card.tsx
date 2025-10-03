@@ -1,4 +1,4 @@
-import { Calendar, Clock, DollarSign, Trophy } from "lucide-react";
+import { Calendar, Clock, DollarSign, Trophy, Users } from "lucide-react";
 import type { Competition } from "./type";
 import { authClient } from "@/lib/auth-client";
 import { useNavigate } from "react-router";
@@ -87,10 +87,14 @@ export default function CompetitionCard({
     }
   }
 
+  const participantCount = competition.participants.length;
+  const cap = competition.participantCap;
+  const percent = Math.min((participantCount / cap) * 100, 100);
+
   return (
     <div
       key={competition._id}
-      className="flex flex-col border rounded-lg shadow hover:shadow-lg transition-shadow p-2 w-full mb-4"
+      className="flex flex-col cursor-pointer border rounded-lg shadow hover:shadow-lg transition-shadow p-2 w-full mb-4"
       onClick={() => {
         navigate(path, {
           state: { competition, userStatus, path },
@@ -98,11 +102,11 @@ export default function CompetitionCard({
       }}
     >
       {/* Header */}
-      <div className="flex justify-between gap-2">
-        <h2 className="md:text-lg text-sm font-semibold text-balance leading-tight">
+      <div className="flex justify-between gap-2 items-start">
+        <h2 className="md:text-lg text-sm font-semibold leading-tight">
           {competition.name}
         </h2>
-        <div className="flex gap-1">
+        <div className="flex items-center gap-1 flex-wrap justify-end">
           <span
             className={cn(
               "px-1 py-0.5 text-[10px] font-medium rounded border",
@@ -132,6 +136,19 @@ export default function CompetitionCard({
           >
             {competition.type}
           </span>
+          {/* Participant cap inline */}
+          <div className="flex items-center gap-1">
+            <Users className="w-3 h-3 text-gray-600" />
+            <span className="text-[11px] font-medium">
+              {participantCount}/{cap}
+            </span>
+            <div className="w-8 h-1 bg-gray-200 rounded-full overflow-hidden">
+              <div
+                className="h-full bg-blue-500"
+                style={{ width: `${percent}%` }}
+              />
+            </div>
+          </div>
         </div>
       </div>
 

@@ -1,17 +1,24 @@
 import mongoose, { Schema, Document, model } from "mongoose";
 
-interface ITeam {
+export interface ISelectedTeam {
   teamId: number;
   name: string;
   logo?: string;
 }
 
-interface ITeamPoints {
+export interface ITeamEntry {
+  fixtureId: string;
+  selectedTeam: ISelectedTeam;
+  opponentTeam: ISelectedTeam;
+  matchVenue?: string;
+}
+
+export interface ITeamPoints {
   teamId: number;
   points: number;
 }
 
-interface IProof {
+export interface IProof {
   step: string;
   url: string;
   verified: boolean;
@@ -21,11 +28,11 @@ export interface ITeamSelection extends Document {
   competition: mongoose.Types.ObjectId;
   user: mongoose.Types.ObjectId;
   stakedAmount: number;
-  teams: ITeam[];
+  teams: ITeamEntry[];
   starTeam?: number | null;
   teamPoints: ITeamPoints[];
   totalPoints: number;
-  rank?: number;
+  rank?: number | null;
   stepsVerified: boolean;
   proofs: IProof[];
   createdAt: Date;
@@ -45,9 +52,18 @@ const TeamSelectionSchema: Schema<ITeamSelection> = new Schema(
     teams: {
       type: [
         {
-          teamId: { type: Number, required: true },
-          name: { type: String, required: true },
-          logo: { type: String, default: "" },
+          fixtureId: { type: String, required: true },
+          selectedTeam: {
+            teamId: { type: Number, required: true },
+            name: { type: String, required: true },
+            logo: { type: String, default: "" },
+          },
+          opponentTeam: {
+            teamId: { type: Number, required: true },
+            name: { type: String, required: true },
+            logo: { type: String, default: "" },
+          },
+          matchVenue: { type: String, required: false },
         },
       ],
       default: [],
@@ -60,7 +76,7 @@ const TeamSelectionSchema: Schema<ITeamSelection> = new Schema(
         validator: function (value: number) {
           const doc = this as ITeamSelection;
           if (!value) return true;
-          return doc.teams?.some((team) => team.teamId === value);
+          return doc.teams?.some((t) => t.selectedTeam.teamId === value);
         },
         message: "Star team must be one of the selected teams",
       },
@@ -71,6 +87,8 @@ const TeamSelectionSchema: Schema<ITeamSelection> = new Schema(
         {
           teamId: { type: Number, required: true },
           points: { type: Number, default: 0 },
+          isLive: { type: Boolean, default: false },
+          isFT: { type: Boolean, default: false },
         },
       ],
       default: [],
@@ -95,16 +113,31 @@ const TeamSelectionSchema: Schema<ITeamSelection> = new Schema(
   { timestamps: true }
 );
 
-//Ensure one TeamSelection per (competition, user)
+// Ensure one TeamSelection per (competition, user)
 TeamSelectionSchema.index({ competition: 1, user: 1 }, { unique: true });
 
-// Handle duplicate entries
+// Ensure unique starTeam per competition (ignores null)
+TeamSelectionSchema.index(
+  { competition: 1, starTeam: 1 },
+  {
+    unique: true,
+    partialFilterExpression: { starTeam: { $type: "number" } },
+  }
+);
+
+// Handle duplicate entries nicely
 TeamSelectionSchema.post("save", function (error: any, doc: any, next: any) {
   if (error.code === 11000) {
-    next(new Error("You have already joined this competition."));
-  } else {
-    next(error);
+    if (error.keyPattern?.competition && error.keyPattern?.starTeam) {
+      return next(
+        new Error("That star team is already taken in this competition.")
+      );
+    }
+    if (error.keyPattern?.competition && error.keyPattern?.user) {
+      return next(new Error("You have already joined this competition."));
+    }
   }
+  next(error);
 });
 
 export default model<ITeamSelection>("TeamSelection", TeamSelectionSchema);

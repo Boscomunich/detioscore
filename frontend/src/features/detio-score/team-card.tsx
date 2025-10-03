@@ -1,16 +1,12 @@
-"use client";
 import { Star, Clock, MapPin } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { cn } from "@/lib/utils";
-import type { FixtureResponse, TeamInfo } from "@/features/football/type";
 import { LazyLoadImage } from "react-lazy-load-image-component";
+import type { TeamWithOpponent } from "./type";
 
-interface TeamCardProps {
-  team: TeamInfo;
-  opponent: TeamInfo;
-  fixture: FixtureResponse;
+interface TeamCardProps extends TeamWithOpponent {
   isSelected: boolean;
   isStarred: boolean;
   onSelect: (teamId: number, teamName: string, teamLogo: string) => void;
@@ -20,7 +16,10 @@ interface TeamCardProps {
 export function TeamCard({
   team,
   opponent,
-  fixture,
+  matchDate,
+  league,
+  leagueLogo,
+  matchVenue,
   isSelected,
   isStarred,
   onSelect,
@@ -68,7 +67,7 @@ export function TeamCard({
         >
           <Checkbox checked={isSelected} onChange={() => {}} className="mt-1" />
 
-          <div className="flex-1">
+          <div className="flex-1 flex flex-col items-center md:items-start w-full">
             {/* Team info */}
             <div className="flex flex-col md:flex-row items-center gap-3 mb-2">
               <LazyLoadImage
@@ -93,11 +92,11 @@ export function TeamCard({
             <div className="flex flex-col md:flex-row items-center gap-1 md:gap-4 text-xs text-muted-foreground">
               <div className="flex items-center gap-1">
                 <Clock className="w-3 h-3" />
-                <span>{formatMatchTime(fixture?.fixture.date)}</span>
+                <span>{formatMatchTime(matchDate)}</span>
               </div>
               <div className="flex items-center gap-1">
                 <MapPin className="w-3 h-3" />
-                <span>{fixture?.fixture.venue.name}</span>
+                <span>{matchVenue}</span>
               </div>
             </div>
 
@@ -105,15 +104,13 @@ export function TeamCard({
             <div className="mt-2 flex items-center gap-2">
               <LazyLoadImage
                 src={
-                  fixture?.league.logo ||
+                  leagueLogo ||
                   "/placeholder.svg?height=16&width=16&query=league logo"
                 }
-                alt={`${fixture.league.name} logo`}
+                alt={`${league} logo`}
                 className="w-4 h-4 rounded"
               />
-              <span className="text-xs text-muted-foreground">
-                {fixture?.league.name}
-              </span>
+              <span className="text-xs text-muted-foreground">{league}</span>
             </div>
           </div>
         </div>

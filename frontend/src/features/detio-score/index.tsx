@@ -20,18 +20,33 @@ export default function DetioScore() {
   }, [session, isPending]);
 
   return (
-    <div className="h-full min-h-[80vh] w-full flex justify-center items-start max-w-4xl border rounded-sm my-2 py-6 mx-auto">
+    <div className="h-full min-h-[80vh] w-[98%] flex justify-center items-start max-w-4xl border rounded-sm my-2 pt-6 pb-20 mx-auto">
       <div className="flex flex-col w-full">
         <Tabs defaultValue="all-competions">
-          <TabsList className="rounded-sm max-w-2xl w-full mx-auto">
-            <TabsTrigger value="all-competions" className="rounded-sm ">
+          <TabsList className="rounded-sm max-w-2xl w-[95%] mx-auto ">
+            <TabsTrigger
+              value="all-competions"
+              className="rounded-sm text-sm font-medium"
+            >
               Competitions
             </TabsTrigger>
-            <TabsTrigger value="top-score" className="rounded-sm">
+            <TabsTrigger
+              value="top-score"
+              className="rounded-sm text-sm font-medium"
+            >
               Top score
             </TabsTrigger>
-            <TabsTrigger value="mango-set" className="rounded-sm">
+            <TabsTrigger
+              value="mango-set"
+              className="rounded-sm text-sm font-medium"
+            >
               Man go set
+            </TabsTrigger>
+            <TabsTrigger
+              value="league"
+              className="rounded-sm text-sm font-medium"
+            >
+              League
             </TabsTrigger>
           </TabsList>
           <TabsContent value="all-competions">
@@ -42,6 +57,9 @@ export default function DetioScore() {
           </TabsContent>
           <TabsContent value="mango-set" className="w-full">
             <ManGoSet />
+          </TabsContent>
+          <TabsContent value="league" className="w-full">
+            <div className="text-center text-xl font-semibold">Coming soon</div>
           </TabsContent>
         </Tabs>
       </div>

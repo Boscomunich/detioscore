@@ -27,7 +27,7 @@ export default function Fixtures() {
   };
 
   return (
-    <div className="max-w-3xl px-4 border rounded-sm my-2 w-full pb-6">
+    <div className="max-w-3xl px-4 border rounded-sm my-2 w-[98%] mx-auto pb-6">
       {/* Top navigation bar */}
       <div className="flex items-center justify-between my-4 p-2">
         <div

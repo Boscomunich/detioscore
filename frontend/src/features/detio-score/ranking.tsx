@@ -1,3 +1,4 @@
+// ranking.tsx
 import {
   Table,
   TableBody,
@@ -10,12 +11,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Trophy, Star, Users, Target } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { LazyLoadImage } from "react-lazy-load-image-component";
-
-interface Team {
-  teamId: string;
-  name: string;
-  logo?: string;
-}
+import { useNavigate } from "react-router";
 
 interface TeamPoints {
   teamId: string;
@@ -29,8 +25,18 @@ interface RankingEntry {
     username: string;
     avatar?: string;
   };
-  teams: Team[];
-  starTeam?: string | null;
+  teams: {
+    teamId: number;
+    name: string;
+    logo?: string;
+    opponent: {
+      teamId: number;
+      name: string;
+      logo?: string;
+    };
+    matchVenue: string;
+  }[];
+  starTeam?: number | null;
   teamPoints: TeamPoints[];
   totalPoints: number;
   stakedAmount: number;
@@ -61,6 +67,8 @@ export function TeamRankingsTable({
     }
   };
 
+  const navigate = useNavigate();
+
   return (
     <div className={cn("w-full", className)}>
       <div className="flex items-center gap-2 text-base font-bold text-[#1E64AA] my-4">
@@ -76,7 +84,6 @@ export function TeamRankingsTable({
       ) : (
         <div className="rounded-md border overflow-x-auto">
           <Table className="min-w-[500px]">
-            {/* Desktop Header */}
             <TableHeader className="hidden md:table-header-group">
               <TableRow>
                 <TableHead className="w-20">Rank</TableHead>
@@ -94,8 +101,11 @@ export function TeamRankingsTable({
                   className={cn(
                     "hover:bg-muted/50 border-b md:table-row flex flex-col gap-1 md:gap-0 p-2 md:p-0"
                   )}
+                  onClick={() =>
+                    navigate("/detio-score/participant", { state: entry })
+                  }
                 >
-                  {/* Rank (mobile: with username) */}
+                  {/* Rank */}
                   <TableCell className="px-2 sm:px-4 md:table-cell md:text-center">
                     <div className="flex items-center gap-2 md:justify-center">
                       <span className="font-bold text-sm sm:text-base">
@@ -142,9 +152,9 @@ export function TeamRankingsTable({
                         <div
                           key={index}
                           className={cn(
-                            "flex-shrink-0 relative",
+                            "flex-shrink-0 relative my-1",
                             entry.starTeam === team.teamId
-                              ? "ring-2 ring-yellow-500 rounded-full"
+                              ? "ring ring-yellow-500 rounded-full"
                               : ""
                           )}
                         >
@@ -161,33 +171,30 @@ export function TeamRankingsTable({
                               </span>
                             )}
                           </div>
-
                           {entry.starTeam === team.teamId && (
-                            <Star className="absolute -top-1 -right-1 h-3 w-3 text-yellow-500 fill-current" />
+                            <Star className="absolute -top-1 -right-1 h-2 w-2 text-yellow-500 fill-current" />
                           )}
                         </div>
                       ))}
                     </div>
                   </TableCell>
 
-                  {/* Points & Stake (mobile combined) */}
+                  {/* Points & Stake (mobile) */}
                   <TableCell className="px-2 sm:px-4 md:hidden">
                     <div className="flex items-center justify-start gap-8 w-auto text-sm">
-                      {/* Points */}
                       <div className="flex items-center gap-1">
                         <span className="font-bold">{entry.totalPoints}</span>
                         <span className="text-xs text-muted-foreground">
                           pts
                         </span>
                       </div>
-                      {/* Stake */}
                       <span className="font-medium">
                         Stake: ${entry.stakedAmount}
                       </span>
                     </div>
                   </TableCell>
 
-                  {/* Desktop-only Points */}
+                  {/* Desktop Points */}
                   <TableCell className="hidden md:table-cell px-2 sm:px-4 text-center">
                     <div className="flex items-center justify-center gap-1">
                       <span className="font-bold text-sm sm:text-lg">
@@ -199,7 +206,7 @@ export function TeamRankingsTable({
                     </div>
                   </TableCell>
 
-                  {/* Desktop-only Stake */}
+                  {/* Desktop Stake */}
                   <TableCell className="hidden md:table-cell px-2 sm:px-4 text-center">
                     <span className="font-medium text-sm sm:text-base">
                       ${entry.stakedAmount}

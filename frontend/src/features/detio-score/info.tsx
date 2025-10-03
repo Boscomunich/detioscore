@@ -1,11 +1,12 @@
 import { authApiClient } from "@/api-config";
 import { useQuery } from "@tanstack/react-query";
-import { useParams } from "react-router";
-import { TeamRankingsTable } from "./ranking";
+import { useNavigate, useParams } from "react-router";
 import { Loader2 } from "lucide-react";
+import { TeamRankingsTable } from "./ranking";
 
 export default function CompetitionInfo() {
   const { id } = useParams();
+  const navigate = useNavigate();
 
   async function fetchData() {
     const response = await authApiClient.get(`/competition/${id}`);
@@ -28,21 +29,24 @@ export default function CompetitionInfo() {
   if (!data)
     return <div className="flex justify-center py-10">No competition data</div>;
 
-  const sortedParticipants = [...(data.participants || [])].sort((a, b) => {
-    const aHasPoints = a.team?.teamPoints?.length > 0;
-    const bHasPoints = b.team?.teamPoints?.length > 0;
+  const sortedParticipants = [...(data.participants || [])]
+    //filter out participants with no selected teams
+    .filter((p) => Array.isArray(p.team?.teams) && p.team.teams.length > 0)
+    .sort((a, b) => {
+      const aHasPoints = a.team?.teamPoints?.length > 0;
+      const bHasPoints = b.team?.teamPoints?.length > 0;
 
-    if (aHasPoints && bHasPoints) {
-      return (b.team?.totalPoints ?? 0) - (a.team?.totalPoints ?? 0);
-    } else if (!aHasPoints && !bHasPoints) {
-      const dateDiff =
-        new Date(a.joinedAt).getTime() - new Date(b.joinedAt).getTime();
-      if (dateDiff !== 0) return dateDiff;
-      return (a.user?.username ?? "").localeCompare(b.user?.username ?? "");
-    } else {
-      return aHasPoints ? -1 : 1;
-    }
-  });
+      if (aHasPoints && bHasPoints) {
+        return (b.team?.totalPoints ?? 0) - (a.team?.totalPoints ?? 0);
+      } else if (!aHasPoints && !bHasPoints) {
+        const dateDiff =
+          new Date(a.joinedAt).getTime() - new Date(b.joinedAt).getTime();
+        if (dateDiff !== 0) return dateDiff;
+        return (a.user?.username ?? "").localeCompare(b.user?.username ?? "");
+      } else {
+        return aHasPoints ? -1 : 1;
+      }
+    });
 
   const rankings = sortedParticipants.map((p, index) => ({
     _id: p._id,
@@ -53,9 +57,15 @@ export default function CompetitionInfo() {
     },
     teams:
       p.team?.teams?.map((team: any) => ({
-        _id: team._id,
-        name: team.name,
-        logo: team.logo || null,
+        teamId: team.selectedTeam.teamId,
+        name: team.selectedTeam.name,
+        logo: team.selectedTeam.logo,
+        opponent: {
+          teamId: team.opponentTeam.teamId,
+          name: team.opponentTeam.name,
+          logo: team.opponentTeam.logo,
+        },
+        matchVenue: team.matchVenue ?? "",
       })) ?? [],
     starTeam: p.team?.starTeam || null,
     teamPoints:
@@ -69,9 +79,17 @@ export default function CompetitionInfo() {
   }));
 
   return (
-    <div className="space-y-4 max-w-3xl border px-4 rounded-sm my-2 w-[98%] mx-auto py-6">
-      <h2 className="text-xl font-bold">{data.name} - Participants</h2>
-      <TeamRankingsTable rankings={rankings} competitionType={data.type} />
-    </div>
+    <>
+      <div
+        className="text-sm w-[95%] max-w-3xl font-[400] px-6 mx-auto cursor-pointer"
+        onClick={() => navigate(-1)}
+      >
+        ← Back
+      </div>
+      <div className="space-y-4 max-w-3xl border px-4 rounded-sm my-2 w-[98%] mx-auto py-6">
+        <h2 className="text-xl font-bold">{data.name} - Participants</h2>
+        <TeamRankingsTable rankings={rankings} competitionType={data.type} />
+      </div>
+    </>
   );
 }

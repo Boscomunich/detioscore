@@ -1,7 +1,9 @@
 import { betterAuth } from "better-auth";
 import { mongodbAdapter } from "better-auth/adapters/mongodb";
-import { admin, bearer, jwt } from "better-auth/plugins";
+import { admin, createAuthMiddleware, jwt } from "better-auth/plugins";
 import mongoose from "../src/database";
+import { emailEmitter } from "../src/event-emitter/email-emitter";
+import { eventEmitter } from "../src/event-emitter";
 
 export const createAuth = () => {
   const db = mongoose.connection.db;
@@ -13,19 +15,31 @@ export const createAuth = () => {
 
   return betterAuth({
     database: mongodbAdapter(db),
+    hooks: {
+      after: createAuthMiddleware(async (ctx) => {
+        if (ctx.path.startsWith("/sign-up")) {
+          const user = (ctx.context.returned as { user?: { id: string } })
+            ?.user;
+          if (user) {
+            eventEmitter.emit("create-wallet", user.id);
+          }
+        }
+      }),
+    },
+
     plugins: [
+      admin({ adminRoles: ["ADMIN", "SUPER_ADMIN"] }),
       jwt({
         jwt: {
-          expirationTime: "1h",
-          definePayload: ({ user }) => ({
-            id: user.id,
-            email: user.email,
-            role: user.role,
-          }),
+          definePayload: ({ user }) => {
+            return {
+              id: user.id,
+              email: user.email,
+              role: user.role,
+            };
+          },
         },
       }),
-      admin({ adminRoles: ["ADMIN", "SUPER_ADMIN"] }),
-      bearer(),
     ],
     user: {
       modelName: "user",
@@ -39,7 +53,40 @@ export const createAuth = () => {
         },
       },
     },
-    emailAndPassword: { enabled: true },
+    emailVerification: {
+      sendVerificationEmail: async ({ user, url, token }) => {
+        const frontendUrl = `${process.env.PROD_CLIENT}/verify-email`;
+        emailEmitter.emit(
+          "send-verification-email",
+          user.email,
+          user.name,
+          frontendUrl,
+          token
+        );
+      },
+      sendOnSignIn: true,
+      sendOnSignUp: true,
+      autoSignInAfterVerification: true,
+      expiresIn: 3600,
+    },
+    emailAndPassword: {
+      enabled: true,
+      disableSignUp: false,
+      requireEmailVerification: true,
+      minPasswordLength: 8,
+      maxPasswordLength: 128,
+      autoSignIn: true,
+      sendResetPassword: async ({ user, url, token }) => {
+        emailEmitter.emit(
+          "send-password-reset-email",
+          user.email,
+          user.name,
+          url,
+          token
+        );
+      },
+      resetPasswordTokenExpiresIn: 3600, // 1 hour
+    },
     session: {
       expiresIn: 60 * 60 * 24 * 7,
       updateAge: 60 * 60 * 24,
@@ -51,6 +98,7 @@ export const createAuth = () => {
         clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
         accessType: "offline",
         prompt: "select_account consent",
+        redirectURI: "https://server.ditioscore.com/api/auth/callback/google",
       },
     },
     trustedOrigins: [

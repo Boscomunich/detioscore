@@ -47,14 +47,21 @@ export interface ImageUploadStepProps {
   required?: boolean;
 }
 
-export interface TeamSelection {
-  teamId: number;
-  teamName: string;
-  teamLogo: string;
-  isStarred: boolean;
-  opponent: string;
+export interface TeamWithOpponent {
+  fixtureId: number;
+  team: {
+    id: number;
+    name: string;
+    logo: string;
+    isStarred: boolean;
+  };
+  opponent: {
+    id: number;
+    name: string;
+    logo: string;
+  };
   matchDate: string;
   league: string;
-  leagueLogo?: string;
+  leagueLogo: string;
   matchVenue?: string;
 }

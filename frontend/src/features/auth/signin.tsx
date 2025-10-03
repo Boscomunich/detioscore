@@ -51,7 +51,6 @@ export function SigninForm() {
     },
   });
 
-  // 2. Define a submit handler.
   async function onSubmit(values: z.infer<typeof formSchema>) {
     await authClient.signIn.email(
       {
@@ -62,6 +61,14 @@ export function SigninForm() {
         onRequest: () => setIsLoading(true),
         onSuccess: async () => {
           setIsLoading(false);
+          // const { data, error } = await authClient.token();
+          // if (error) {
+          //   // handle error
+          // }
+          // if (data) {
+          //   const jwtToken = data.token;
+          //   console.log(jwtToken);
+          // }
           toast.success(
             "Welcome to Ditioscore! you will be redirected back to the previous page"
           );
@@ -106,7 +113,7 @@ export function SigninForm() {
             name="email"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>email</FormLabel>
+                <FormLabel>Email</FormLabel>
                 <FormControl>
                   <Input placeholder="Email" {...field} />
                 </FormControl>
@@ -151,6 +158,16 @@ export function SigninForm() {
             )}
           />
 
+          {/* Forgot Password link */}
+          <div className="flex justify-end -mt-2">
+            <Link
+              to="/forgot-password"
+              className="text-sm text-lime-500 hover:underline font-medium"
+            >
+              Forgot password?
+            </Link>
+          </div>
+
           <Button
             type="submit"
             className="w-full bg-lime-400 text-black text-xl font-semibold h-14"
@@ -174,7 +191,7 @@ export function SigninForm() {
         <hr className="flex-1 border-gray-300" />
       </div>
       <Button
-        className="w-full border bg-transparent flex items-center justify-center text-xl font-semibold h-14 text-foreground"
+        className="w-full border bg-transparent flex items-center justify-center text-xl font-semibold h-14 text-foreground active:scale-105"
         onClick={() => signInWithGoogle()}
       >
         <img src="/icons/google.png" alt="Google" className="w-7 h-7 mr-2" />
