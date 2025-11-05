@@ -11,7 +11,7 @@ const TransactionSchema = new mongoose.Schema(
     amount: { type: Number, required: true },
     paymentMethod: {
       type: String,
-      enum: ["card", "transfer", "googlepay", "applepay", "system", "crypto"],
+      enum: ["card", "transfer"],
       default: "system",
     },
     status: {

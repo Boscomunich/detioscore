@@ -1,9 +1,87 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 
+@font-face {
+  font-family: "Syne";
+  src: url("/fonts/Syne/Syne-Regular.woff2") format("woff2"),
+    url("/fonts/Syne/Syne-Regular.woff") format("woff");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Syne";
+  src: url("/fonts/Syne/Syne-Medium.woff2") format("woff2"),
+    url("/fonts/Syne/Syne-Medium.woff") format("woff");
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Syne";
+  src: url("/fonts/Syne/Syne-SemiBold.woff2") format("woff2"),
+    url("/fonts/Syne/Syne-SemiBold.woff") format("woff");
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Syne";
+  src: url("/fonts/Syne/Syne-Bold.woff2") format("woff2"),
+    url("/fonts/Syne/Syne-Bold.woff") format("woff");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Sora";
+  src: url("/fonts/Sora/Sora-Regular.woff2") format("woff2"),
+    url("/fonts/Sora/Sora-Regular.woff") format("woff");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Sora";
+  src: url("/fonts/Sora/Sora-Medium.woff2") format("woff2"),
+    url("/fonts/Sora/Sora-Medium.woff") format("woff");
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Sora";
+  src: url("/fonts/Sora/Sora-Bold.woff2") format("woff2"),
+    url("/fonts/Sora/Sora-Bold.woff") format("woff");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Sora";
+  src: url("/fonts/Sora/Sora-ExtraBold.woff2") format("woff2"),
+    url("/fonts/Sora/Sora-ExtraBold.woff") format("woff");
+  font-weight: 800;
+  font-style: normal;
+  font-display: swap;
+}
+
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
+  --font-syne: "Syne", sans-serif;
+  --font-sora: "Sora", sans-serif;
+  --font-sans: var(--font-sora);
+
+  --color-brand: #1e64aa;
+  --color-auto: var(--color-auto);
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
@@ -42,8 +120,9 @@
 }
 
 :root {
+  --color-auto: #ffffff;
   --radius: 0.65rem;
-  --background: oklch(1 0 0);
+  --background: #f8f9f9;
   --foreground: oklch(0.141 0.005 285.823);
   --card: oklch(1 0 0);
   --card-foreground: oklch(0.141 0.005 285.823);
@@ -77,7 +156,8 @@
 }
 
 .dark {
-  --background: oklch(0.141 0.005 285.823);
+  --color-auto: #111d21;
+  --background: #323232;
   --foreground: oklch(0.985 0 0);
   --card: oklch(0.21 0.006 285.885);
   --card-foreground: oklch(0.985 0 0);
@@ -108,6 +188,11 @@
   --sidebar-accent-foreground: oklch(0.985 0 0);
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.645 0.246 16.439);
+}
+
+html {
+  font-family: var(--font-sans);
+  scroll-behavior: smooth;
 }
 
 @layer base {

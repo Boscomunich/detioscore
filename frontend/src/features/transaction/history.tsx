@@ -26,22 +26,7 @@ import {
 } from "lucide-react";
 import { authApiClient } from "@/api-config";
 import { useQuery } from "@tanstack/react-query";
-
-interface Transaction {
-  _id: string;
-  type: "stake" | "payout" | "withdrawal" | "topup";
-  amount: number;
-  paymentMethod:
-    | "card"
-    | "transfer"
-    | "googlepay"
-    | "applepay"
-    | "system"
-    | "crypto";
-  status: "pending" | "completed" | "failed";
-  createdAt: string;
-  description?: string;
-}
+import type { Transaction } from "@/types/transaction";
 
 const getTransactionIcon = (type: string) => {
   switch (type) {

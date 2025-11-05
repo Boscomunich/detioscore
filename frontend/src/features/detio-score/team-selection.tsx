@@ -4,36 +4,25 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { AlertCircle, Loader, Loader2, Users } from "lucide-react";
-import type {
-  FixtureResponse,
-  FixturesApiResponse,
-} from "@/features/football/type";
+import type { FixtureResponse, FixturesApiResponse } from "@/types/football";
 import { apiClient, authApiClient } from "@/api-config";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { useNavigate, useParams } from "react-router";
-import type { Competition, TeamWithOpponent } from "./type";
 import { TeamCard } from "./team-card";
+import type { Competition, TeamWithOpponent } from "@/types/competition";
 
 const PRIORITY_ORDER = [2, 3, 848, 39, 140, 78, 135, 61, 94, 88, 144, 179, 203];
 
 const sortFixturesByPopularityAndCountry = (
   fixtures: FixtureResponse[] | undefined
 ) => {
-  if (!fixtures) return [];
+  if (!fixtures || !Array.isArray(fixtures)) return [];
 
-  const leagueMap = new Map<
-    number,
-    {
-      leagueId: number;
-      leagueName: string;
-      country: string;
-      countryFlag?: string;
-      matches: FixtureResponse[];
-    }
-  >();
+  const leagueMap = new Map<number, any>();
 
   fixtures.forEach((fixture) => {
+    if (!fixture?.league || !fixture.fixture) return;
     const {
       id: leagueId,
       name: leagueName,
@@ -41,32 +30,27 @@ const sortFixturesByPopularityAndCountry = (
       flag,
       logo,
     } = fixture.league;
+    if (!leagueId) return;
 
     if (!leagueMap.has(leagueId)) {
       leagueMap.set(leagueId, {
         leagueId,
-        leagueName,
-        country,
-        countryFlag: flag || logo,
+        leagueName: leagueName || "Unknown League",
+        country: country || "Unknown Country",
+        countryFlag: flag || logo || "",
         matches: [],
       });
     }
-
-    leagueMap.get(leagueId)!.matches.push(fixture);
+    leagueMap.get(leagueId)?.matches.push(fixture);
   });
 
   const allLeagues = Array.from(leagueMap.values());
-
   return allLeagues.sort((a, b) => {
     const aIndex = PRIORITY_ORDER.indexOf(a.leagueId);
     const bIndex = PRIORITY_ORDER.indexOf(b.leagueId);
-
-    if (aIndex !== -1 && bIndex !== -1) {
-      return aIndex - bIndex;
-    }
+    if (aIndex !== -1 && bIndex !== -1) return aIndex - bIndex;
     if (aIndex !== -1) return -1;
     if (bIndex !== -1) return 1;
-
     const countryCompare = a.country.localeCompare(b.country);
     if (countryCompare !== 0) return countryCompare;
     return a.leagueName.localeCompare(b.leagueName);
@@ -75,67 +59,37 @@ const sortFixturesByPopularityAndCountry = (
 
 const extractTeamsFromFixtures = (
   fixtures: FixtureResponse[],
-  starredTeam: number | null
+  starredFixture: number | null
 ): TeamWithOpponent[] => {
-  const teams: TeamWithOpponent[] = [];
-
-  for (const fixture of fixtures) {
-    teams.push(
-      {
-        fixtureId: fixture.fixture.id,
-        team: {
-          id: fixture.teams.home.id,
-          name: fixture.teams.home.name,
-          logo: fixture.teams.home.logo,
-          isStarred: fixture.teams.home.id === starredTeam,
-        },
-        opponent: {
-          id: fixture.teams.away.id,
-          name: fixture.teams.away.name,
-          logo: fixture.teams.away.logo,
-        },
-        matchDate: fixture.fixture.date,
-        league: fixture.league.name,
-        leagueLogo: fixture.league.logo,
-        matchVenue: fixture.fixture.venue?.name,
+  if (!fixtures?.length) return [];
+  return fixtures
+    .filter((f) => f?.fixture && f?.teams?.home && f?.teams?.away)
+    .map((fixture) => ({
+      fixtureId: fixture.fixture.id,
+      team: {
+        id: fixture.teams.home.id,
+        name: fixture.teams.home.name,
+        logo: fixture.teams.home.logo,
       },
-      {
-        fixtureId: fixture.fixture.id,
-        team: {
-          id: fixture.teams.away.id,
-          name: fixture.teams.away.name,
-          logo: fixture.teams.away.logo,
-          isStarred: fixture.teams.away.id === starredTeam,
-        },
-        opponent: {
-          id: fixture.teams.home.id,
-          name: fixture.teams.home.name,
-          logo: fixture.teams.home.logo,
-        },
-        matchDate: fixture.fixture.date,
-        league: fixture.league.name,
-        leagueLogo: fixture.league.logo,
-        matchVenue: fixture.fixture.venue?.name,
-      }
-    );
-  }
-
-  return teams;
+      opponent: {
+        id: fixture.teams.away.id,
+        name: fixture.teams.away.name,
+        logo: fixture.teams.away.logo,
+      },
+      isStarred: fixture.fixture.id === starredFixture,
+      matchDate: fixture.fixture.date,
+      league: fixture.league?.name || "Unknown League",
+      leagueLogo: fixture.league?.logo,
+      matchVenue: fixture.fixture.venue?.name || "Unknown Venue",
+    }));
 };
 
 const useDebounce = (value: string, delay: number) => {
   const [debouncedValue, setDebouncedValue] = useState(value);
-
   useEffect(() => {
-    const handler = setTimeout(() => {
-      setDebouncedValue(value);
-    }, delay);
-
-    return () => {
-      clearTimeout(handler);
-    };
+    const handler = setTimeout(() => setDebouncedValue(value), delay);
+    return () => clearTimeout(handler);
   }, [value, delay]);
-
   return debouncedValue;
 };
 
@@ -145,52 +99,65 @@ export default function SelectTeamForm({
   competition: Competition;
 }) {
   const [selectedTeams, setSelectedTeams] = useState<Set<number>>(new Set());
-  const [starredTeam, setStarredTeam] = useState<number | null>(null);
+  const [starredFixture, setStarredFixture] = useState<number | null>(null);
   const [error, setError] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const navigate = useNavigate();
   const { id } = useParams();
 
   const debouncedSearchQuery = useDebounce(searchQuery, 300);
-
   const competitionDate = new Date(
-    competition.startDate ?? Date.now()
+    competition?.startDate ?? Date.now()
   ).toLocaleDateString("en-CA");
-
   const userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
-  const { data, isLoading } = useQuery<FixturesApiResponse>({
-    queryKey: ["select fixtures", competition._id],
+  const { data, isLoading, isError } = useQuery<FixturesApiResponse>({
+    queryKey: ["select fixtures", competition?._id],
     queryFn: async () => {
-      const response = await apiClient.get(
-        `/livescore/get-daily-fixtures?date=${competitionDate}&timezone=${userTimezone}`
-      );
-      return response.data;
+      try {
+        const response = await apiClient.get(
+          `/livescore/daily-fixtures?date=${competitionDate}&timezone=${userTimezone}`
+        );
+        return response.data;
+      } catch (err: any) {
+        const message =
+          err?.response?.data?.message || "Failed to fetch fixtures.";
+        toast.error(message);
+        throw new Error(message);
+      }
     },
+    enabled: !!competitionDate,
   });
 
-  async function fetchData() {
-    const response = await authApiClient.get(`/competition/${id}`);
-    return response.data;
-  }
-
-  const { data: competitionData } = useQuery({
+  const { data: competitionData, isError: compError } = useQuery({
     queryKey: ["competition", id],
-    queryFn: fetchData,
+    queryFn: async () => {
+      try {
+        const response = await authApiClient.get(`/competition/${id}`);
+        return response.data;
+      } catch (err: any) {
+        const message =
+          err?.response?.data?.message || "Failed to fetch competition data.";
+        toast.error(message);
+        throw new Error(message);
+      }
+    },
     enabled: !!id,
   });
 
   const allTeams: TeamWithOpponent[] = useMemo(() => {
     if (!data?.response) return [];
-
-    const sortedLeagues = sortFixturesByPopularityAndCountry(data.response);
-    const sortedFixtures = sortedLeagues.flatMap((league) => league.matches);
-    return extractTeamsFromFixtures(sortedFixtures, starredTeam);
-  }, [data, starredTeam]);
+    try {
+      const sortedLeagues = sortFixturesByPopularityAndCountry(data.response);
+      const sortedFixtures = sortedLeagues.flatMap((l) => l.matches || []);
+      return extractTeamsFromFixtures(sortedFixtures, starredFixture);
+    } catch {
+      return [];
+    }
+  }, [data, starredFixture]);
 
   const filteredTeams = useMemo(() => {
     if (!debouncedSearchQuery.trim()) return allTeams;
-
     const query = debouncedSearchQuery.toLowerCase();
     return allTeams.filter(
       (t) =>
@@ -202,55 +169,70 @@ export default function SelectTeamForm({
 
   const handleTeamSelect = useCallback(
     (teamId: number) => {
+      if (!teamId) return;
       setSelectedTeams((prev) => {
-        if (prev.has(teamId)) {
-          const newSet = new Set(prev);
+        const newSet = new Set(prev);
+        if (newSet.has(teamId)) {
           newSet.delete(teamId);
           return newSet;
         }
-
-        if (prev.size < competition.requiredTeams) {
-          const newSet = new Set(prev);
+        if (newSet.size < (competition?.requiredTeams || 0)) {
           newSet.add(teamId);
-          return newSet;
+        } else {
+          toast.warning("You’ve reached the maximum number of teams.");
         }
-
-        return prev;
+        return newSet;
       });
     },
-    [competition.requiredTeams]
+    [competition?.requiredTeams]
   );
 
-  const handleTeamStar = useCallback((teamId: number) => {
-    setStarredTeam((prev) => (prev === teamId ? null : teamId));
+  const handleTeamStar = useCallback((fixtureId: number) => {
+    if (!fixtureId) return;
+    setStarredFixture((prev) => (prev === fixtureId ? null : fixtureId));
   }, []);
 
   const mutation = useMutation({
     mutationFn: async (data: any) => {
-      const res = await authApiClient.post(
-        `/top-score/join/${competition._id}`,
-        data
-      );
-      return res.data;
+      try {
+        const res = await authApiClient.patch(
+          `/competition/join/${competition?._id}`,
+          data
+        );
+        return res.data;
+      } catch (err: any) {
+        const message =
+          err?.response?.data?.message ||
+          `Failed to join ${competition?.name || "competition"}.`;
+        throw new Error(message);
+      }
     },
     onSuccess: () => {
       toast.success(
-        `you have successfully joined the ${competition.name} competition`
+        `You have successfully joined the ${competition?.name} competition`
       );
-      navigate(`/detio-score/${competition._id}/details`, {
-        replace: true,
-      });
+      navigate(`/detio-score/${competition?._id}/details`, { replace: true });
     },
-    onError: (error: any) => {
-      console.log(error);
-      toast.error(`error joining ${competition.name}`);
-      setError(error.response.data.message);
+    onError: (err: any) => {
+      const message = err?.message || "An unexpected error occurred.";
+      setError(message);
+      toast.error(message);
     },
   });
 
   const handleSubmit = () => {
     setError("");
+    if (selectedTeams.size < (competition?.requiredTeams || 0)) {
+      toast.warning(
+        "Please select the required number of teams before joining."
+      );
+      return;
+    }
     const selections = allTeams.filter((t) => selectedTeams.has(t.team.id));
+    if (!selections.length) {
+      setError("No teams selected.");
+      return;
+    }
     mutation.mutate(selections);
   };
 
@@ -259,6 +241,16 @@ export default function SelectTeamForm({
       <Card className="w-full max-w-4xl mx-auto">
         <Loader2 className="animate-spin rounded-full h-8 w-8 mx-auto mb-4" />
         <p className="text-muted-foreground text-center">Loading matches...</p>
+      </Card>
+    );
+  }
+
+  if (isError || compError) {
+    return (
+      <Card className="w-full max-w-4xl mx-auto">
+        <CardContent className="p-8 text-center text-red-600">
+          Failed to load data. Please try again later.
+        </CardContent>
       </Card>
     );
   }
@@ -278,46 +270,52 @@ export default function SelectTeamForm({
   return (
     <div className="w-full max-w-4xl mx-auto space-y-6">
       <h1>All selected star teams</h1>
-      {competitionData?.participants && (
+      {competitionData?.participants?.length > 0 && (
         <Card>
           <CardContent className="flex flex-col md:flex-row items-center justify-between gap-6">
-            {/* Total Participants */}
             <div className="flex items-center gap-2 text-muted-foreground">
               <Users className="w-4 h-4" />
               <span className="text-sm font-medium">
                 {competitionData.participants.length} Participants
               </span>
             </div>
-
-            {/* Starred Teams Logos + Names */}
             <div className="flex flex-wrap items-center gap-4">
-              {competitionData.participants.map((p: any) => {
-                if (!p.team) return null;
-                const starTeamId = p.team.starTeam;
-                const starTeam = p.team.teams.find(
-                  (t: any) =>
-                    t.selectedTeam?.teamId === starTeamId ||
-                    t.opponentTeam?.teamId === starTeamId
+              {competitionData.participants.map((p: any, index: any) => {
+                const starTeamId = p?.team?.starTeam;
+                const starFixture = p?.team?.teams?.find(
+                  (t: any) => t.fixtureId === starTeamId
                 );
 
-                const teamData =
-                  starTeam.selectedTeam?.teamId === starTeamId
-                    ? starTeam.selectedTeam
-                    : starTeam.opponentTeam;
-
+                if (!starFixture) return null;
                 return (
-                  <div
-                    key={`${p._id}-${starTeamId}`}
-                    className="flex flex-col items-center text-center"
-                  >
-                    <img
-                      src={teamData.logo}
-                      alt={teamData.name}
-                      className="w-5 h-5 rounded-full border shadow-sm"
-                    />
-                    <span className="text-[10px] mt-1 text-muted-foreground">
-                      {teamData.name}
-                    </span>
+                  <div className="flex items-center justify-center gap-2">
+                    <div
+                      key={index}
+                      className="flex flex-col items-center text-center"
+                    >
+                      <img
+                        src={starFixture.selectedTeam.logo}
+                        alt={starFixture.selectedTeam.name}
+                        className="w-5 h-5 rounded-full border shadow-sm"
+                      />
+                      <span className="text-[10px] mt-1 text-muted-foreground">
+                        {starFixture.selectedTeam.name}
+                      </span>
+                    </div>
+                    <p className="text-xs font-bold">vs</p>
+                    <div
+                      key={`${p?._id}-${starTeamId}`}
+                      className="flex flex-col items-center text-center"
+                    >
+                      <img
+                        src={starFixture.opponentTeam.logo}
+                        alt={starFixture.opponentTeam.name}
+                        className="w-5 h-5 rounded-full border shadow-sm"
+                      />
+                      <span className="text-[10px] mt-1 text-muted-foreground">
+                        {starFixture.opponentTeam.name}
+                      </span>
+                    </div>
                   </div>
                 );
               })}
@@ -326,20 +324,18 @@ export default function SelectTeamForm({
         </Card>
       )}
 
-      {/* Rule Card */}
       <Card>
         <CardContent className="px-2">
           <div className="text-sm text-muted-foreground space-y-1">
             <p>
-              • Select between 1 and {competition.requiredTeams} teams to join
-              the competition
+              • Select {competition?.requiredTeams || 0} matches to join the
+              competition
             </p>
-            <p>• Star your favorite team to score more points</p>
+            <p>• Star your match to score more points</p>
           </div>
         </CardContent>
       </Card>
 
-      {/* Error display */}
       {error && (
         <div className="w-full rounded-xl border border-red-300 bg-red-50 p-4 flex items-center gap-3 text-red-700 shadow-sm">
           <AlertCircle className="h-5 w-5 flex-shrink-0" />
@@ -347,7 +343,6 @@ export default function SelectTeamForm({
         </div>
       )}
 
-      {/* Search input */}
       <Input
         type="text"
         placeholder="Search teams..."
@@ -356,21 +351,24 @@ export default function SelectTeamForm({
         className="w-full"
       />
 
-      {/* Selection Stats */}
       <div className="flex items-center justify-between flex-wrap gap-2">
         <div className="flex items-center gap-4">
           <Badge variant="outline" className="flex items-center gap-1">
             <Users className="w-3 h-3" />
-            {selectedTeams.size}/{competition.requiredTeams} teams selected
+            {selectedTeams.size}/{competition?.requiredTeams || 0} teams
+            selected
           </Badge>
-          {starredTeam && (
-            <Badge variant="secondary">⭐ Starred team chosen</Badge>
+          {starredFixture && (
+            <Badge variant="secondary">⭐ Starred fixture chosen</Badge>
           )}
         </div>
 
         <Button
           onClick={handleSubmit}
-          disabled={selectedTeams.size < competition.requiredTeams}
+          disabled={
+            selectedTeams.size < (competition?.requiredTeams || 0) ||
+            mutation.isPending
+          }
           className="bg-primary hover:bg-primary/90 w-full"
         >
           {mutation.isPending ? (
@@ -383,14 +381,13 @@ export default function SelectTeamForm({
         </Button>
       </div>
 
-      {/* Teams Grid */}
       <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-2 md:gap-4">
         {filteredTeams.map((t) => (
           <TeamCard
             key={`${t.fixtureId}-${t.team.id}`}
             {...t}
             isSelected={selectedTeams.has(t.team.id)}
-            isStarred={starredTeam === t.team.id}
+            isStarred={starredFixture === t.fixtureId}
             onSelect={handleTeamSelect}
             onStar={handleTeamStar}
           />

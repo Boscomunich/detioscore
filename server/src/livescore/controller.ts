@@ -408,10 +408,11 @@ const POPULAR_LEAGUE_COUNTRIES = [
 
 export async function fetchAllCountries(req: Request, res: Response) {
   try {
-    const response = await fetchFootballData<Country[]>("countries");
+    // 👇 Correct generic: <Country>, not <Country[]>
+    const response = await fetchFootballData<Country>("countries");
     const result: CountriesResponse = response.data;
 
-    // Sort countries: popular first, then alphabetical
+    // Sort: popular first, then alphabetically
     const sortedCountries = [...result.response].sort((a, b) => {
       const aPopular = POPULAR_LEAGUE_COUNTRIES.includes(a.name);
       const bPopular = POPULAR_LEAGUE_COUNTRIES.includes(b.name);
@@ -434,7 +435,7 @@ export async function fetchAllCountries(req: Request, res: Response) {
       results: sortedCountries.length,
     });
   } catch (error) {
-    console.error("Failed to fetch countries:", error);
+    console.error("❌ Failed to fetch countries:", error);
     return res.status(500).json({ error: "Failed to fetch countries" });
   }
 }
@@ -444,7 +445,14 @@ export async function fetchLeagues(req: Request, res: Response) {
   try {
     const { country } = req.query;
 
-    const leaguesResponse = await fetchFootballData<League[]>("leagues", {
+    if (!country) {
+      return res
+        .status(400)
+        .json({ error: "Missing required query param: country" });
+    }
+
+    // 👇 Correct generic: <LeagueResponse>, not <League[]>
+    const leaguesResponse = await fetchFootballData<LeagueResponse>("leagues", {
       country: country as string,
       current: "true",
     });
@@ -503,7 +511,7 @@ export async function fetchFixturesRounds(req: Request, res: Response) {
 // Fetch fixtures
 export async function fetchFixtures(req: Request, res: Response) {
   try {
-    const { leagueId, season, round, date, status } = req.query;
+    const { leagueId, season, round, date, status, from, to } = req.query;
 
     const query: Record<string, string> = {
       league: leagueId as string,
@@ -513,6 +521,8 @@ export async function fetchFixtures(req: Request, res: Response) {
     if (round) query.round = round as string;
     if (date) query.date = date as string;
     if (status) query.status = status as string;
+    if (from) query.from = from as string;
+    if (to) query.to = to as string;
 
     const response = await fetchFootballData("fixtures", query);
 
@@ -608,6 +618,24 @@ export async function fetchFixtureEvents(req: Request, res: Response) {
   }
 }
 
+//fetch current rounds of matches by league
+export async function fetchCurrentFixtureRounds(req: Request, res: Response) {
+  try {
+    const { leagueId, season } = req.query;
+
+    const response = await fetchFootballData("fixtures/rounds", {
+      league: leagueId as string,
+      season: season as string,
+      current: "true",
+    });
+
+    return res.status(200).json(response.data);
+  } catch (error) {
+    console.error("Failed to fetch fixture rounds:", error);
+    return res.status(500).json({ error: "Failed to fetch fixture rounds" });
+  }
+}
+
 //Fetch H2H data
 export async function fetchFixtureH2H(req: Request, res: Response) {
   try {
@@ -626,7 +654,7 @@ export async function fetchFixtureH2H(req: Request, res: Response) {
   }
 }
 
-//Fetch statistics data
+//Fetch match statistics data
 export async function fetchFixtureStatistics(req: Request, res: Response) {
   try {
     const { fixtureId } = req.query;
@@ -635,6 +663,74 @@ export async function fetchFixtureStatistics(req: Request, res: Response) {
       fixture: fixtureId as string,
     });
 
+    return res.status(200).json(response.data);
+  } catch (error) {
+    console.error("Failed to fetch fixture statistics:", error);
+    return res
+      .status(500)
+      .json({ error: "Failed to fetch fixture statistics" });
+  }
+}
+
+// fetch topscores for a league
+export async function fetchTopScorers(req: Request, res: Response) {
+  const { leagueId, season } = req.query;
+  try {
+    const response = await fetchFootballData("players/topscorers", {
+      season: season as string,
+      league: leagueId as string,
+    });
+    return res.status(200).json(response.data);
+  } catch (error) {
+    console.error("Failed to fetch fixture statistics:", error);
+    return res
+      .status(500)
+      .json({ error: "Failed to fetch fixture statistics" });
+  }
+}
+
+//fetch top assisters for a league
+export async function fetchTopAssisters(req: Request, res: Response) {
+  const { leagueId, season } = req.query;
+  try {
+    const response = await fetchFootballData("players/topassists", {
+      season: season as string,
+      league: leagueId as string,
+    });
+    return res.status(200).json(response.data);
+  } catch (error) {
+    console.error("Failed to fetch fixture statistics:", error);
+    return res
+      .status(500)
+      .json({ error: "Failed to fetch fixture statistics" });
+  }
+}
+
+//fetch top yellow carded players for a league
+export async function fetchTopYellowCards(req: Request, res: Response) {
+  const { leagueId, season } = req.query;
+  try {
+    const response = await fetchFootballData("players/topyellowcards", {
+      season: season as string,
+      league: leagueId as string,
+    });
+    return res.status(200).json(response.data);
+  } catch (error) {
+    console.error("Failed to fetch fixture statistics:", error);
+    return res
+      .status(500)
+      .json({ error: "Failed to fetch fixture statistics" });
+  }
+}
+
+//fetch top red carded players for a league
+export async function fetchTopRedCards(req: Request, res: Response) {
+  const { leagueId, season } = req.query;
+  try {
+    const response = await fetchFootballData("players/topredcards", {
+      season: season as string,
+      league: leagueId as string,
+    });
     return res.status(200).json(response.data);
   } catch (error) {
     console.error("Failed to fetch fixture statistics:", error);

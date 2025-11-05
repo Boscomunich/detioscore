@@ -1,8 +1,6 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { authClient } from "@/lib/auth-client";
 import { apiClient } from "@/api-config";
-import { LoginDialog } from "../auth/popup";
 import {
   Accordion,
   AccordionContent,
@@ -10,37 +8,32 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { LazyLoadImage } from "react-lazy-load-image-component";
-import type { Country, Leagues } from "../football/type";
+import type { Country, Leagues } from "../../types/football";
 import { useNavigate } from "react-router";
 import { Loader2 } from "lucide-react";
 
 export default function League() {
-  const [open, setOpen] = useState(false);
-  const { data: session, isPending } = authClient.useSession();
-
   async function fetchCountries() {
-    const response = await apiClient.get("/livescore/get-countries");
+    const response = await apiClient.get("/livescore/countries");
     return response.data;
   }
 
-  const { data } = useQuery({
+  const { data, isLoading } = useQuery({
     queryKey: ["countries"],
     queryFn: fetchCountries,
   });
 
   const countries: Country[] = data?.response;
 
-  useEffect(() => {
-    if (isPending) return;
-    if (!session) {
-      setOpen(true);
-    } else {
-      setOpen(false);
-    }
-  }, [session, isPending]);
+  if (isLoading)
+    return (
+      <div className="flex justify-center py-10">
+        <Loader2 className="animate-spin rounded-full h-5 w-5 mx-auto mb-4" />
+      </div>
+    );
 
   return (
-    <div className="h-full w-full max-w-3xl mx-auto flex justify-center items-center">
+    <div className="h-full w-[95%] bg-auto max-w-7xl border rounded-sm mb-2 mx-auto flex justify-center items-center">
       <div className="flex flex-col justify-center items-start w-full">
         <Accordion type="single" collapsible className="w-full">
           {countries?.map((country, index) => (
@@ -48,7 +41,6 @@ export default function League() {
           ))}
         </Accordion>
       </div>
-      <LoginDialog open={open} />
     </div>
   );
 }
@@ -59,7 +51,7 @@ function CountryCard({ country }: { country: Country }) {
 
   async function fetchLeagues() {
     const response = await apiClient.get(
-      `/livescore/get-leagues?country=${country?.name}`
+      `/livescore/leagues?country=${country?.name}`
     );
     return response.data;
   }
@@ -73,7 +65,10 @@ function CountryCard({ country }: { country: Country }) {
   const leagues: Leagues[] = data?.response ?? [];
 
   return (
-    <AccordionItem value={country.name} className="m-4 border rounded-md">
+    <AccordionItem
+      value={country.name}
+      className="m-4 w-[90%] border-none py-4 rounded-sm mx-auto"
+    >
       <AccordionTrigger
         onClick={() => setIsOpen((prev) => !prev)}
         className="h-12 px-6 items-center"
@@ -90,14 +85,16 @@ function CountryCard({ country }: { country: Country }) {
 
       <AccordionContent className="flex flex-col gap-4 text-sm px-4 pb-4">
         {isLoading && (
-          <Loader2 className="animate-spin rounded-full h-5 w-5 mx-auto mb-4" />
+          <div className="flex justify-center py-10">
+            <Loader2 className="animate-spin rounded-full h-5 w-5 mx-auto mb-4" />
+          </div>
         )}
 
         {!isLoading &&
           leagues.map((league: Leagues) => (
             <div
               key={league.league.id}
-              className="flex items-center gap-3 p-2 border rounded-md hover:bg-muted"
+              className="flex items-center rounded-sm gap-3 p-6 hover:bg-muted"
               onClick={() =>
                 navigate(league.league.name, { state: league as Leagues })
               }

@@ -1,19 +1,10 @@
 import axios, { AxiosRequestConfig } from "axios";
+import { FootballApiResponse } from "./types";
 
-interface ApiParams {
+/** ---- Shared types ---- **/
+
+export interface ApiParams {
   [key: string]: string | number | boolean | undefined;
-}
-
-interface FootballApiResponse<T> {
-  get: string;
-  parameters: any[];
-  errors: any[];
-  results: number;
-  paging: {
-    current: number;
-    total: number;
-  };
-  response: T;
 }
 
 export async function fetchFootballData<T = any>(

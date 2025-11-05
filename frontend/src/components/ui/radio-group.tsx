@@ -25,7 +25,31 @@ function RadioGroupItem({
     <RadioGroupPrimitive.Item
       data-slot="radio-group-item"
       className={cn(
-        "border-input text-primary focus-visible:border-ring focus-visible:ring-ring/50 aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive dark:bg-input/30 aspect-square size-8 shrink-0 rounded-full border shadow-xs transition-[color,box-shadow] outline-none focus-visible:ring-[3px] disabled:cursor-not-allowed disabled:opacity-50",
+        // Base styles
+        "aspect-square size-5 shrink-0 rounded-full border-2 shadow-xs transition-all duration-200 outline-none",
+
+        // Light mode - enhanced contrast
+        "border-gray-400 bg-white text-gray-900",
+        "hover:border-gray-600 hover:bg-gray-50",
+        "focus-visible:border-gray-800 focus-visible:ring-4 focus-visible:ring-gray-200",
+        "data-[state=checked]:border-brand data-[state=checked]:bg-brand",
+
+        // Dark mode
+        "dark:border-gray-500 dark:bg-gray-800 dark:text-gray-100",
+        "dark:hover:border-gray-400 dark:hover:bg-gray-700",
+        "dark:focus-visible:border-gray-300 dark:focus-visible:ring-4 dark:focus-visible:ring-gray-600",
+        "dark:data-[state=checked]:border-brand dark:data-[state=checked]:bg-brand",
+
+        // Disabled states
+        "disabled:cursor-not-allowed disabled:opacity-50",
+        "disabled:border-gray-300 disabled:bg-gray-100",
+        "dark:disabled:border-gray-600 dark:disabled:bg-gray-800",
+
+        // Invalid states
+        "aria-invalid:border-red-500 aria-invalid:bg-red-50",
+        "dark:aria-invalid:border-red-400 dark:aria-invalid:bg-red-900/20",
+        "aria-invalid:focus-visible:ring-red-100 dark:aria-invalid:focus-visible:ring-red-900/30",
+
         className
       )}
       {...props}
@@ -34,7 +58,7 @@ function RadioGroupItem({
         data-slot="radio-group-indicator"
         className="relative flex items-center justify-center"
       >
-        <CircleIcon className="fill-primary absolute top-1/2 left-1/2 size-6 -translate-x-1/2 -translate-y-1/2" />
+        <CircleIcon className="fill-white absolute top-1/2 left-1/2 size-2.5 -translate-x-1/2 -translate-y-1/2" />
       </RadioGroupPrimitive.Indicator>
     </RadioGroupPrimitive.Item>
   );

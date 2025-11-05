@@ -1,91 +1,83 @@
-import { Star, Table, Tally4, UserRoundCog } from "lucide-react";
+import { Star, Table, Tally4, User } from "lucide-react";
 import { SettingsPage } from "./settings";
-import { Link, NavLink } from "react-router";
+import { Link, NavLink, useNavigate } from "react-router";
 import { cn } from "@/lib/utils";
 import { SheetCard } from "../football/layout";
+import { authClient } from "@/lib/auth-client";
+import { Button } from "@/components/ui/button";
 
 const links = [
-  {
-    name: "Favourite",
-    link: "/favourite",
-    icon: Star,
-  },
-  {
-    name: "DS",
-    link: "/detio-score",
-    icon: Tally4,
-  },
-  {
-    name: "League",
-    link: "/league",
-    icon: Table,
-  },
+  { name: "Favourite", link: "/favourite", icon: Star },
+  { name: "DS", link: "/detio-score", icon: Tally4 },
 ];
 
-const profile = {
-  name: "Profile",
-  link: "/profile",
-  icon: UserRoundCog,
-};
+// const profile = { name: "Profile", link: "/profile", icon: UserRoundCog };
+const admin = { name: "Admin", link: "/admin", icon: Table };
 
 export default function Navbar() {
+  const navigate = useNavigate();
+  const { data: session } = authClient.useSession();
+  const user = session?.user;
+
   return (
-    <div className="fixed top-0 w-full h-18 md:h-28 bg-primary flex flex-col gap-2 justify-between md:justify-evenly px-4 lg:px-12 z-[1000]">
-      <div className="flex items-center justify-between h-full">
-        <Link
-          to=""
-          className="text-white text-2xl lg:text-4xl font-bold flex justify-center gap-2 items-center"
-        >
-          <img
-            src="/assets/logo.png"
-            alt="Logo"
-            className="size-7 lg:size-12"
-          />
-          <h1>
-            Ditio<span className="text-[#1E64AA]">Score</span>
-          </h1>
-        </Link>
-        <div className="flex justify-center gap-4 items-center">
-          <NavLink
-            to={profile.link}
-            end={profile.link === "/"}
-            className={({ isActive }) =>
-              cn(
-                `md:flex flex-col hidden items-center justify-center rounded-xs px-2`,
-                {
-                  "text-blue-500": isActive,
-                  "text-white": !isActive,
-                }
-              )
-            }
-          >
-            <profile.icon size={20} />
-            <span className="text-xs">{profile.name}</span>
-          </NavLink>
-          <div className="hidden md:block">
-            <SettingsPage />
-          </div>
-          <SheetCard />
-        </div>
-      </div>
-      <div className="hidden md:flex gap-2 justtify-start">
+    <div className="fixed top-0 left-0 w-full h-20 md:h-24 bg-black shadow-sm flex items-center justify-between px-6 md:px-12 z-[1000] text-white">
+      <Link to="/" className="flex items-center gap-2 font-bold text-4xl">
+        <img src="/assets/logo.png" alt="Logo" className="w-7 h-7" />
+        <h1>
+          Ditio<span className="text-brand">Score</span>
+        </h1>
+      </Link>
+
+      <div className="lg:flex items-center gap-6 hidden">
         {links.map((item, index) => (
           <NavLink
             to={item.link}
             key={index}
             end={item.link === "/"}
             className={({ isActive }) =>
-              cn(`flex flex-col items-center justify-center rounded-xs px-2`, {
-                "text-blue-500": isActive,
-                "text-white": !isActive,
+              cn("flex items-center gap-1 text-base hover:text-brand/60", {
+                "text-brand": isActive,
               })
             }
           >
             <item.icon size={20} />
-            <span className="text-xs">{item.name}</span>
+            <span>{item.name}</span>
           </NavLink>
         ))}
+
+        {/* Profile */}
+        <Button
+          className={cn(
+            "flex justify-center gap-2 w-24 py-3 items-center text-base font-semibold",
+            user && "hidden"
+          )}
+          onClick={() => navigate("/signin")}
+        >
+          <User size={20} />
+          Login
+        </Button>
+
+        {
+          //@ts-expect-error user role exist
+          user?.role === "admin" && (
+            <NavLink
+              to={admin.link}
+              className={({ isActive }) =>
+                cn("flex items-center gap-1 text-base  hover:text-brand/60", {
+                  "text-brand": isActive,
+                })
+              }
+            >
+              <admin.icon size={20} />
+              <span>{admin.name}</span>
+            </NavLink>
+          )
+        }
+        <div className="flex items-center gap-3">
+          <SettingsPage />
+        </div>
       </div>
+      <SheetCard />
     </div>
   );
 }

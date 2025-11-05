@@ -3,61 +3,8 @@ import { useLeague } from "../../hooks/use-leagues";
 import { useQuery } from "@tanstack/react-query";
 import { apiClient } from "@/api-config";
 import ScoreCard from "../score-card";
-import { type FixturesApiResponse, type FixtureResponse } from "../type";
-
-// Group fixtures by league and sort
-function sortFixturesByPopularityAndCountry(fixtures: FixtureResponse[]) {
-  const TOP_EUROPEAN_LEAGUES = new Set([
-    39, 140, 78, 135, 61, 94, 88, 144, 179, 203,
-  ]);
-
-  const leagueMap = new Map<
-    number,
-    {
-      leagueId: number;
-      leagueName: string;
-      country: string;
-      leagueLogo?: string;
-      countryFlag?: string | null;
-      matches: FixtureResponse[];
-      isTopLeague: boolean;
-    }
-  >();
-
-  fixtures.forEach((fixture) => {
-    const { id: leagueId, name, country, flag, logo } = fixture.league;
-    const isTopLeague = TOP_EUROPEAN_LEAGUES.has(leagueId);
-
-    if (!leagueMap.has(leagueId)) {
-      leagueMap.set(leagueId, {
-        leagueId,
-        leagueName: name,
-        country,
-        countryFlag: flag || logo,
-        matches: [],
-        isTopLeague,
-      });
-    }
-
-    leagueMap.get(leagueId)!.matches.push(fixture);
-  });
-
-  const allLeagues = Array.from(leagueMap.values());
-
-  const topLeagues = allLeagues
-    .filter((l) => l.isTopLeague)
-    .sort((a, b) => a.leagueId - b.leagueId);
-
-  const otherLeagues = allLeagues
-    .filter((l) => !l.isTopLeague)
-    .sort((a, b) => {
-      const countryCompare = a.country.localeCompare(b.country);
-      if (countryCompare !== 0) return countryCompare;
-      return a.leagueName.localeCompare(b.leagueName);
-    });
-
-  return [...topLeagues, ...otherLeagues];
-}
+import { sortFixturesByPopularityAndCountry } from "@/lib/utils";
+import type { FixturesApiResponse } from "@/types/football";
 
 export default function LiveFixturesCard() {
   const { league } = useLeague();
@@ -66,7 +13,7 @@ export default function LiveFixturesCard() {
     queryKey: ["live-fixtures", league?.league.id, league?.seasons[0].year],
     queryFn: async () => {
       const response = await apiClient.get(
-        `/livescore/get-live?leagueId=${league?.league.id}&season=${league?.seasons[0].year}`
+        `/livescore/live?leagueId=${league?.league.id}&season=${league?.seasons[0].year}`
       );
       return response.data;
     },
@@ -90,9 +37,12 @@ export default function LiveFixturesCard() {
       ) : (
         <div className="flex flex-col gap-8 mt-4">
           {sortedLeagues.map((league) => (
-            <div key={league.leagueId} className="mb-6">
+            <div
+              key={league.leagueId}
+              className="mb-6 bg-auto rounded-xl border"
+            >
               {/* League Header */}
-              <div className="mb-3 flex items-center gap-2">
+              <div className="mb-3 flex items-start gap-2 bg-background/50 p-4">
                 <img
                   src={league.countryFlag || "/placeholder.svg"}
                   alt={league.leagueName}
@@ -109,7 +59,7 @@ export default function LiveFixturesCard() {
               </div>
 
               {/* Matches */}
-              <div className="flex flex-col gap-2">
+              <div className="flex flex-col gap-2 p-4 bg-auto rounded-b-xl">
                 {league.matches.map((fixture, index) => (
                   <ScoreCard fixture={fixture} key={index} />
                 ))}

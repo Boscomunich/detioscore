@@ -55,9 +55,6 @@ const notificationSchema = new Schema<INotification>(
  */
 notificationSchema.index({ recipient: 1, status: 1, createdAt: -1 });
 
-/**
- * Example static method (optional)
- */
 notificationSchema.statics.getUnreadCount = async function (
   userId: string
 ): Promise<number> {

@@ -4,7 +4,10 @@ import { useLeague } from "../hooks/use-leagues";
 import { useQuery } from "@tanstack/react-query";
 import { apiClient } from "@/api-config";
 import ScoreCard from "./score-card";
-import type { FixtureResponse, FixturesApiResponse } from "./type";
+import type {
+  FixtureResponse,
+  FixturesApiResponse,
+} from "../../types/football";
 
 // Group fixtures by round and sort
 function groupFixturesByRound(fixtures: FixtureResponse[]) {
@@ -49,7 +52,7 @@ export default function ResultsCard() {
     queryKey: ["fixtures", league?.league.id, league?.seasons[0].year],
     queryFn: async () => {
       const response = await apiClient.get(
-        `/livescore/get-fixtures?leagueId=${league?.league.id}&season=${league?.seasons[0].year}`
+        `/livescore/fixtures?leagueId=${league?.league.id}&season=${league?.seasons[0].year}`
       );
       return response.data;
     },

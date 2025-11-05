@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { X, Upload, ImageIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
-import type { ImageUploadStepProps, UploadedImage } from "../../type";
+import type { ImageUploadStepProps, UploadedImage } from "@/types/competition";
 
 export function ImageUploadStep({
   stepId,

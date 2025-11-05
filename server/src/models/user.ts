@@ -12,10 +12,13 @@ export interface IUser {
   googleId?: string;
   emailVerified: boolean;
   role: "USER" | "ADMIN" | "SUPER_ADMIN";
+  country: string;
   ipAddresses: IUserIP[];
   lastLogin?: Date;
   deviceInfo?: string;
   banned: boolean;
+  suspended: boolean;
+  suspensionReason?: string | null;
   banReason?: string | null;
   banExpires?: Date | null;
 }
@@ -36,6 +39,7 @@ const UserSchema = new mongoose.Schema<IUserDocument>(
       enum: ["USER", "ADMIN", "SUPER_ADMIN"],
       default: "USER",
     },
+    country: { type: String, required: true },
     ipAddresses: {
       type: [
         {
@@ -50,8 +54,10 @@ const UserSchema = new mongoose.Schema<IUserDocument>(
     banned: { type: Boolean, required: true, default: false },
     banReason: { type: String, default: null },
     banExpires: { type: Date, default: null },
+    suspended: { type: Boolean, required: true, default: false },
+    suspensionReason: { type: String, default: null },
   },
-  { timestamps: true }
+  { timestamps: true, collection: "user" }
 );
 
 const User = mongoose.model<IUserDocument>("User", UserSchema);

@@ -1,5 +1,3 @@
-import { useEffect, useState } from "react";
-import { LoginDialog } from "../auth/popup";
 import { authClient } from "@/lib/auth-client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -16,10 +14,10 @@ import { ChangeUsernameDialog } from "./username";
 import ActiveCompetition from "./competition/active-competition";
 import InActiveCompetition from "./competition/inactive-competition";
 import { ChangePasswordDialog } from "./change-password";
+import UserRank from "./user-rank";
 
 export default function Profile() {
-  const [open, setOpen] = useState(false);
-  const { data: session, isPending } = authClient.useSession();
+  const { data: session } = authClient.useSession();
   const user = session?.user;
   let initials = "";
   if (user?.name) {
@@ -30,15 +28,6 @@ export default function Profile() {
       initials = (words[0][0] + words[1][0]).toUpperCase();
     }
   }
-
-  useEffect(() => {
-    if (isPending) return;
-    if (!session) {
-      setOpen(true);
-    } else {
-      setOpen(false);
-    }
-  }, [session, isPending]);
 
   return (
     <div className="h-full w-[98%] flex flex-col justify-center items-center max-w-3xl px-4 rounded-sm my-2 pb-6 mx-auto gap-4">
@@ -59,13 +48,22 @@ export default function Profile() {
         </h1>
         <Card className="w-full max-w-2xl mt-1">
           <CardContent>
-            <div className="flex justify-start items-center gap-4">
-              <Avatar className="rounded-full bg-secondary size-10 flex justify-center items-center">
-                <AvatarImage src={user?.image ?? ""} alt="" />
-                <AvatarFallback>{initials}</AvatarFallback>
-              </Avatar>
-              <h1 className="text-base font-semibold">{user?.name}</h1>
-            </div>
+            <Accordion type="single" collapsible className="w-full">
+              <AccordionItem value="item-1">
+                <AccordionTrigger className="mb-4 text-base font-semibold">
+                  <div className="flex justify-start items-center gap-4">
+                    <Avatar className="rounded-full bg-secondary size-10 flex justify-center items-center">
+                      <AvatarImage src={user?.image ?? ""} alt="" />
+                      <AvatarFallback>{initials}</AvatarFallback>
+                    </Avatar>
+                    <h1 className="text-base font-semibold">{user?.name}</h1>
+                  </div>
+                </AccordionTrigger>
+                <AccordionContent className="flex flex-col gap-4 text-balance">
+                  <UserRank />
+                </AccordionContent>
+              </AccordionItem>
+            </Accordion>
             <hr className="h-1 w-full my-4" />
             <ChangeUsernameDialog />
           </CardContent>
@@ -78,17 +76,17 @@ export default function Profile() {
           Transaction
         </h1>
         <Card className="w-full max-w-2xl mt-1">
-          <CardContent className="">
+          <CardContent className=" w-full">
             <Link to="/deposit" className="text-base font-semibold">
-              Deposit
+              <h1 className="w-full py-4">Deposit</h1>
             </Link>
-            <hr className="h-1 w-full my-4" />
+            <hr className="h-1 w-full" />
             <Link to="/withdraw" className="text-base font-semibold">
-              withdraw
+              <h1 className="w-full py-4">withdraw</h1>
             </Link>
-            <hr className="h-1 w-full my-4" />
+            <hr className="h-1 w-full" />
             <Link to="/transaction-history" className="text-base font-semibold">
-              Transaction History
+              <h1 className="w-full py-4">Transaction History</h1>
             </Link>
           </CardContent>
         </Card>
@@ -101,23 +99,31 @@ export default function Profile() {
         </h1>
         <Card className="w-full max-w-2xl mt-1">
           <CardContent className="">
-            <Accordion type="single" collapsible className="w-full">
+            <Accordion type="single" collapsible className="w-full py-4">
               <AccordionItem value="item-1">
-                <AccordionTrigger>Active Comeptition</AccordionTrigger>
+                <AccordionTrigger className="mb-4 text-base font-semibold">
+                  Active Comeptition
+                </AccordionTrigger>
                 <AccordionContent className="flex flex-col gap-4 text-balance">
                   <ActiveCompetition />
                 </AccordionContent>
               </AccordionItem>
             </Accordion>
-            <hr className="h-1 w-full my-4" />
-            <Accordion type="single" collapsible className="w-full">
+            <hr className="h-1 w-full" />
+            <Accordion type="single" collapsible className="w-full py-4">
               <AccordionItem value="item-1">
-                <AccordionTrigger>Inactive Comeptition</AccordionTrigger>
+                <AccordionTrigger className="mb-4 text-base font-semibold">
+                  Inactive Comeptition
+                </AccordionTrigger>
                 <AccordionContent className="flex flex-col gap-4 text-balance">
                   <InActiveCompetition />
                 </AccordionContent>
               </AccordionItem>
             </Accordion>
+            <hr className="h-1 w-full" />
+            <Link to="#" className="text-base font-semibold">
+              <h1 className="w-full py-4">Achievements</h1>
+            </Link>
           </CardContent>
         </Card>
       </div>
@@ -137,7 +143,6 @@ export default function Profile() {
           </CardContent>
         </Card>
       </div>
-      <LoginDialog open={open} />
     </div>
   );
 }

@@ -3,7 +3,7 @@ import type { Dispatch, SetStateAction } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 import { Trophy, CheckCircle } from "lucide-react";
-import type { Competition } from "../../type";
+import type { Competition } from "@/types/competition";
 
 interface CompetitionRuleProps {
   setStep: Dispatch<SetStateAction<number>>;
@@ -14,32 +14,28 @@ const generalRules = [
   {
     name: "Team Selection",
     content:
-      "Participant selects the required number of teams as specified by Host",
+      "Participants must select the required number of fixtures as specified by the host for each competition.",
   },
   {
-    name: "Star Team",
+    name: "Star Fixtures",
     content:
-      "Participant must pick one team as the star team and star teams are unique per competition",
+      "Each participant must choose one team as their star team. Star teams are unique to each competition and can serve as the deciding factor in the event of a draw.",
   },
-  {
-    name: "Stake",
-    content:
-      "The host set stake amount in Ditiocoin, this is the amount required to join the competition",
-  },
+
   {
     name: "Point System",
     content:
-      "Every selected team earns 3 points for a win, 2 points for a draw, and 0 points for a loss. Star team points are tripled",
+      "Participants earn one point for every goal scored by their selected teams. In the case of a tie, the participant whose teams scored earlier goals will rank higher.",
   },
   {
     name: "Eligible Teams",
     content:
-      "Teams to be selected must be teams in action on the day of the competition",
+      "Only teams scheduled to play on the competition day are eligible for selection.",
   },
   {
     name: "Reward Payout",
     content:
-      "Points are calculated and rewards paid out within 24 hours after competition ends, winner takes all payout",
+      "All points are tallied, and rewards are distributed within 48 hours after the competition concludes.",
   },
 ];
 

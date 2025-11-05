@@ -1,13 +1,13 @@
 import { ChevronLeft, Loader2, Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
-
-import { type Country, type Leagues } from "./type";
 import { useLeague } from "../hooks/use-leagues";
 import { apiClient } from "@/api-config";
 import { useQuery } from "@tanstack/react-query";
 import { LazyLoadImage } from "react-lazy-load-image-component";
 import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
+import { useNavigate } from "react-router";
+import type { Country, Leagues } from "@/types/football";
 
 export default function CountriesCard({
   onCloseSheet,
@@ -19,13 +19,11 @@ export default function CountriesCard({
   const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => {
-    if (country) {
-      setIsCountrySelected(true);
-    }
+    if (country) setIsCountrySelected(true);
   }, [country]);
 
   async function fetchCountries() {
-    const response = await apiClient.get("/livescore/get-countries");
+    const response = await apiClient.get("/livescore/countries");
     return response.data;
   }
 
@@ -39,28 +37,24 @@ export default function CountriesCard({
       setCountry(null);
       setLeague(null);
       setIsCountrySelected(false);
-      setSearchQuery(""); // Clear search when going back
+      setSearchQuery("");
     } else {
       setCountry(country);
       setIsCountrySelected(true);
     }
   }
 
-  // Filter countries based on search query (case insensitive and order independent)
   const filteredCountries =
     data?.response?.filter((country: Country) => {
       if (!searchQuery) return true;
-
       const query = searchQuery.toLowerCase();
       const countryName = country.name.toLowerCase();
-
-      // Check if all characters in the query exist in the country name (order independent)
       return query.split("").every((char) => countryName.includes(char));
     }) || [];
 
   if (isCountrySelected) {
     return (
-      <div className="max-w-xs border rounded-sm w-full pb-2">
+      <div className="md:max-w-xs p-4 bg-auto rounded-sm w-full pb-2 min-h-[400px]">
         <CountryLeagues
           handleCountryToggle={handleCountryToggle}
           onCloseSheet={onCloseSheet}
@@ -70,7 +64,7 @@ export default function CountriesCard({
   }
 
   return (
-    <div className="max-w-xs px-4 border rounded-sm w-full pb-2">
+    <div className="md:max-w-xs p-4 bg-auto rounded-sm w-full pb-2">
       <div className="flex items-center justify-between my-4 p-2">
         <div className="flex relative w-full max-w-md items-center">
           <Search className="absolute left-1.5 z-[10] top-2.5 size-4" />
@@ -85,7 +79,7 @@ export default function CountriesCard({
       </div>
 
       {isLoading ? (
-        <div className="flex justify-center py-10">
+        <div className="flex justify-center items-center w-full py-10 min-h-[300px]">
           <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
         </div>
       ) : (
@@ -99,7 +93,7 @@ export default function CountriesCard({
               <div
                 onClick={() => handleCountryToggle(data)}
                 className={cn(
-                  "flex items-center justify-between gap-4 p-1 cursor-pointer rounded-sm mx-1 border hover:bg-muted text-sm font-medium",
+                  "flex items-center justify-start gap-4 p-3 cursor-pointer rounded-sm mx-1 hover:bg-muted text-sm font-medium",
                   data.name === country?.name && "bg-muted"
                 )}
                 key={index}
@@ -121,15 +115,16 @@ export default function CountriesCard({
 
 export function CountryLeagues({
   handleCountryToggle,
-  onCloseSheet,
 }: {
   handleCountryToggle: (country: Country) => void;
   onCloseSheet?: () => void;
 }) {
-  const { setLeague, country, league } = useLeague();
+  const navigate = useNavigate();
+  const { country } = useLeague();
+
   async function fetchCountries() {
     const response = await apiClient.get(
-      `/livescore/get-leagues?country=${country?.name}`
+      `/livescore/leagues?country=${country?.name}`
     );
     return response.data;
   }
@@ -143,18 +138,19 @@ export function CountryLeagues({
   const leagueData: Leagues[] = data?.response ?? [];
 
   return (
-    <div className="overflow-hidden w-full md:w-[250px]">
+    <div className="overflow-hidden w-full bg-auto p-4">
       {isLoading ? (
-        <div className="flex justify-center py-10">
+        <div className="flex justify-center items-center w-full py-10 min-h-[300px]">
           <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
         </div>
       ) : (
         <div>
-          <div className="flex items-center justify-between gap-4 p-1 cursor-pointer px-2 h-20 border-b text-sm font-medium mb-2">
+          {/* Header */}
+          <div className="flex items-center justify-between gap-4 p-1 cursor-pointer px-2 h-20 text-sm font-medium mb-2">
             <div onClick={() => handleCountryToggle(country!)}>
               <ChevronLeft />
             </div>
-            <div className="flex w-[70%] justify-end gap-6 items-center">
+            <div className="flex w-[70%] justify-end gap-2 items-center">
               <LazyLoadImage
                 src={country?.flag || "/assets/world.png"}
                 className="size-5"
@@ -163,18 +159,20 @@ export function CountryLeagues({
               {country?.name}
             </div>
           </div>
-          <div className="flex flex-col gap-2">
+
+          {/* Leagues list */}
+          <div className="flex flex-col gap-4">
             {leagueData.map((data, index) => (
               <div
                 key={index}
                 className={cn(
-                  "flex items-center justify-between gap-4 p-1 cursor-pointer rounded-sm mx-1 border hover:bg-muted text-sm font-medium h-10",
-                  data.league.name === league?.league.name && "bg-muted"
+                  "flex items-center justify-start gap-4 p-3 cursor-pointer mx-1 hover:bg-muted text-sm font-medium"
                 )}
-                onClick={() => {
-                  setLeague(data);
-                  onCloseSheet?.();
-                }}
+                onClick={() =>
+                  navigate(`/league/${data.league.name}`, {
+                    state: data,
+                  })
+                }
               >
                 <LazyLoadImage
                   src={data.league.logo}

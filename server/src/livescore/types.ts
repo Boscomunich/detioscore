@@ -1,18 +1,3 @@
-interface Paging {
-  current: number;
-  total: number;
-}
-
-export interface FootballApiResponse<T> {
-  get: string;
-  parameters: any[];
-  errors: any[];
-  results: number;
-  paging: Paging;
-  response: T[];
-}
-
-// Country and League types
 export interface Country {
   name: string;
   code: string;
@@ -36,6 +21,17 @@ export interface League {
 }
 
 // Standings types
+export interface MatchStats {
+  played: number;
+  win: number;
+  draw: number;
+  lose: number;
+  goals: {
+    for: number;
+    against: number;
+  };
+}
+
 export interface TeamStanding {
   rank: number;
   team: {
@@ -55,17 +51,6 @@ export interface TeamStanding {
   update: string;
 }
 
-interface MatchStats {
-  played: number;
-  win: number;
-  draw: number;
-  lose: number;
-  goals: {
-    for: number;
-    against: number;
-  };
-}
-
 export interface LeagueStanding {
   league: {
     id: number;
@@ -78,73 +63,89 @@ export interface LeagueStanding {
   };
 }
 
-export interface StandingsResponse {
-  get: string;
+export interface StandingsResponse extends FootballApiResponse<LeagueStanding> {
   parameters: {
     league: string;
     season: string;
   };
-  errors: any[];
-  results: number;
-  paging: Paging;
-  response: LeagueStanding[];
 }
 
 // Rounds types
-export interface RoundsResponse {
-  get: string;
+export interface RoundsResponse extends FootballApiResponse<string> {
   parameters: {
     league: string;
     season: string;
   };
-  errors: any[];
-  results: number;
-  paging: Paging;
-  response: string[]; // Array of round names
 }
 
 // Fixtures types
-export interface Fixture {
-  fixture: {
-    id: number;
-    date: string;
-    timestamp: number;
-    status: {
-      short: string;
-      elapsed?: number;
-    };
-  };
-  teams: {
-    home: TeamInfo;
-    away: TeamInfo;
-  };
-  goals: {
-    home: number;
-    away: number;
-  };
-}
-
-interface TeamInfo {
+export interface TeamInfo {
   id: number;
   name: string;
   logo: string;
   winner?: boolean;
 }
 
-export interface FixturesResponse {
-  get: string;
+export interface ScoreResult {
+  home: number | null;
+  away: number | null;
+}
+
+export interface Fixture {
+  fixture: {
+    id: number;
+    referee: string | null;
+    timezone: string;
+    date: string;
+    timestamp: number;
+    periods: {
+      first: number | null;
+      second: number | null;
+    };
+    venue: {
+      id: number | null;
+      name: string;
+      city: string;
+    };
+    status: {
+      long: string;
+      short: string;
+      elapsed: number | null;
+      extra: number | null;
+    };
+  };
+  league: {
+    id: number;
+    name: string;
+    country: string;
+    logo: string;
+    flag: string | null;
+    season: number;
+    round: string;
+  };
+  teams: {
+    home: TeamInfo;
+    away: TeamInfo;
+  };
+  goals: {
+    home: number | null;
+    away: number | null;
+  };
+  score: {
+    halftime: ScoreResult;
+    fulltime: ScoreResult;
+    extratime: ScoreResult;
+    penalty: ScoreResult;
+  };
+}
+
+export interface FixturesResponse extends FootballApiResponse<Fixture> {
   parameters: {
     league: string;
     season: string;
     round?: string;
   };
-  errors: any[];
-  results: number;
-  paging: Paging;
-  response: Fixture[];
 }
-
-// types.ts
 
 export interface LeagueInfo {
   id: number;
@@ -188,4 +189,18 @@ export interface LeagueResponse {
   league: LeagueInfo;
   country: LeagueCountry;
   seasons: LeagueSeason[];
+}
+
+export interface Paging {
+  current: number;
+  total: number;
+}
+
+export interface FootballApiResponse<T> {
+  get: string;
+  parameters: Record<string, any>;
+  errors: any[];
+  results: number;
+  paging: Paging;
+  response: T[];
 }

@@ -6,7 +6,7 @@ export default function AppLayout() {
   return (
     <div>
       <Navbar />
-      <div className="pt-20 md:pt-36 pb-20 md:pb-0">
+      <div className="pt-28 md:pt-36 pb-20 md:pb-0">
         <Outlet />
       </div>
       <BottomTabs />

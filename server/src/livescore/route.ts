@@ -1,6 +1,7 @@
 import express from "express";
 import {
   fetchAllCountries,
+  fetchCurrentFixtureRounds,
   fetchDailyFixtures,
   fetchFixtureEvents,
   fetchFixtureH2H,
@@ -11,20 +12,29 @@ import {
   fetchLeagueStandings,
   fetchLineUps,
   fetchLiveFixtures,
+  fetchTopAssisters,
+  fetchTopRedCards,
+  fetchTopScorers,
+  fetchTopYellowCards,
 } from "./controller";
 
 const router = express.Router();
 
-router.get("/get-countries", fetchAllCountries);
-router.get("/get-leagues", fetchLeagues);
-router.get("/get-standings", fetchLeagueStandings);
-router.get("/get-rounds", fetchFixturesRounds);
-router.get("/get-fixtures", fetchFixtures);
-router.get("/get-live", fetchLiveFixtures);
-router.get("/get-lineups", fetchLineUps);
-router.get("/get-daily-fixtures", fetchDailyFixtures);
-router.get("/get-fixture-event/:id", fetchFixtureEvents);
-router.get("/get-fixture-h2h", fetchFixtureH2H);
-router.get("/get-fixture-statistics", fetchFixtureStatistics);
+router.get("/countries", fetchAllCountries);
+router.get("/leagues", fetchLeagues);
+router.get("/standings", fetchLeagueStandings);
+router.get("/rounds", fetchFixturesRounds);
+router.get("/rounds/current", fetchCurrentFixtureRounds);
+router.get("/fixtures", fetchFixtures);
+router.get("/live", fetchLiveFixtures);
+router.get("/lineups", fetchLineUps);
+router.get("/daily-fixtures", fetchDailyFixtures);
+router.get("/fixture-event/:id", fetchFixtureEvents);
+router.get("/fixture-h2h", fetchFixtureH2H);
+router.get("/fixture-statistics", fetchFixtureStatistics);
+router.get("/stats/players/topscorers", fetchTopScorers);
+router.get("/stats/players/topassisters", fetchTopAssisters);
+router.get("/stats/players/yellowcards", fetchTopYellowCards);
+router.get("/stats/players/redcards", fetchTopRedCards);
 
 export const livescoreRouter = router;

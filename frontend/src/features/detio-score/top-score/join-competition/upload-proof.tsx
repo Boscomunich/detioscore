@@ -7,7 +7,7 @@ import { toast } from "sonner";
 
 import { authApiClient } from "@/api-config";
 import { useMutation } from "@tanstack/react-query";
-import type { Competition } from "../../type";
+import type { Competition } from "@/types/competition";
 
 interface UploadedImage {
   file: File;
@@ -109,7 +109,7 @@ export function UploadProof({ setStep, competition }: CompetitionRuleProps) {
               <ImageUploadStep
                 stepId={step._id}
                 images={getStepImages(step._id)}
-                onImagesChange={(newImages) =>
+                onImagesChange={(newImages: any) =>
                   handleImagesChange(step._id, newImages)
                 }
                 required={true}

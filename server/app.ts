@@ -1,6 +1,6 @@
+import "dotenv/config";
 import express from "express";
 import cors from "cors";
-import dotenv from "dotenv";
 import morgan from "morgan";
 import helmet from "helmet";
 import cookieParser from "cookie-parser";
@@ -15,13 +15,21 @@ import { topScoreRouter } from "./src/top-score/route";
 import { manGoSetRouter } from "./src/mango-set/route";
 import { competitionRouter } from "./src/competition/route";
 import globalErrorHandler from "./src/middleware/error-handler";
-import { sessionMiddleware } from "./src/middleware/session";
+import {
+  adminSessionMiddleware,
+  sessionMiddleware,
+} from "./src/middleware/session";
 import { createAuth } from "./utils/auth";
 import { transactionRouter } from "./src/transaction/route";
 import { notificationRouter } from "./src/notification/route";
 import { userRouter } from "./src/user/route";
-
-dotenv.config();
+import { adminRouter } from "./src/admin/route";
+import {
+  scheduleDailyAwardPoints,
+  scheduleDailyFixtureIndexer,
+  scheduleDailyFixtureUpdate,
+} from "./src/cron-jobs";
+import { rankingRouter } from "./src/ranks/route";
 
 const port = parseInt(process.env.PORT || "6000", 10);
 const allowedOrigins = [
@@ -95,10 +103,16 @@ async function startServer() {
   app.use("/transaction", sessionMiddleware(auth), transactionRouter);
   app.use("/notification", sessionMiddleware(auth), notificationRouter);
   app.use("/user", sessionMiddleware(auth), userRouter);
+  app.use("/admin", adminSessionMiddleware(auth), adminRouter);
+  app.use("/rankings", sessionMiddleware(auth), rankingRouter);
 
   app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(specs));
 
   app.use(globalErrorHandler);
+
+  scheduleDailyFixtureIndexer();
+  scheduleDailyFixtureUpdate();
+  scheduleDailyAwardPoints();
 
   app.listen(port, () => {
     console.log(`Server listening on port ${port}`);

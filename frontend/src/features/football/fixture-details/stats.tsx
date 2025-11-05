@@ -1,14 +1,14 @@
 import { apiClient } from "@/api-config";
+import type { StatsResponse } from "@/types/football";
 import { useQuery } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
-import type { StatsResponse } from "../type";
 
 export default function Stats({ fixture }: { fixture: any }) {
   const { data, isLoading } = useQuery<StatsResponse>({
     queryKey: ["fixture-stats", fixture.fixture.id],
     queryFn: async () => {
       const response = await apiClient.get(
-        `/livescore/get-fixture-statistics?fixtureId=${fixture.fixture.id}`
+        `/livescore/fixture-statistics?fixtureId=${fixture.fixture.id}`
       );
       return response.data;
     },
@@ -30,7 +30,6 @@ export default function Stats({ fixture }: { fixture: any }) {
 
   const [homeTeam, awayTeam] = data.response;
 
-  // Create a map of statistics for easier lookup
   const homeStats = new Map(
     homeTeam.statistics.map((stat) => [stat.type, stat.value])
   );
@@ -38,7 +37,6 @@ export default function Stats({ fixture }: { fixture: any }) {
     awayTeam.statistics.map((stat) => [stat.type, stat.value])
   );
 
-  // Define the stats we want to display in order
   const statsToShow = [
     "Shots on Goal",
     "Shots off Goal",
@@ -56,7 +54,6 @@ export default function Stats({ fixture }: { fixture: any }) {
   const getStatValue = (value: string | number | null): number => {
     if (value === null) return 0;
     if (typeof value === "string") {
-      // Handle percentage values
       if (value.includes("%")) {
         return Number.parseInt(value.replace("%", ""));
       }
@@ -80,16 +77,14 @@ export default function Stats({ fixture }: { fixture: any }) {
     const percentage = isHome
       ? (homeVal / total) * 100
       : (awayVal / total) * 100;
-    return Math.max(percentage, 5); // Minimum 5% width for visibility
+    return Math.max(percentage, 5);
   };
 
-  // Determine which team should have the primary color for each stat
   const getTeamColors = (
     statType: string,
     homeNum: number,
     awayNum: number
   ) => {
-    // For most stats, higher is better (possession, shots, corners, passes, saves)
     const isHigherBetter = [
       "Shots on Goal",
       "Shots off Goal",
@@ -100,7 +95,6 @@ export default function Stats({ fixture }: { fixture: any }) {
       "Goalkeeper Saves",
     ].includes(statType);
 
-    // For these stats, lower is better (cards, fouls, offsides)
     const isLowerBetter = [
       "Yellow Cards",
       "Red Cards",
@@ -119,7 +113,6 @@ export default function Stats({ fixture }: { fixture: any }) {
       awayIsPrimary = awayNum < homeNum;
     }
 
-    // If both teams have the same value, use muted colors for both
     if (homeNum === awayNum) {
       return {
         homeColor: "bg-muted-foreground",
@@ -134,7 +127,7 @@ export default function Stats({ fixture }: { fixture: any }) {
   };
 
   return (
-    <div className="rounded-lg p-6 space-y-4">
+    <div className="rounded-lg p-4 sm:p-6 space-y-4 w-full overflow-hidden">
       {statsToShow.map((statType) => {
         const homeValue = homeStats.get(statType);
         const awayValue = awayStats.get(statType);
@@ -153,41 +146,41 @@ export default function Stats({ fixture }: { fixture: any }) {
         );
 
         return (
-          <div key={statType} className="flex items-center">
-            {/* Home team value */}
-            <div className="md:w-8 w-auto text-right font-medium">
-              {getDisplayValue(homeValue)}
-            </div>
-
-            {/* Progress bars */}
-            <div className="flex-1 mx-4 flex items-center">
-              {/* Home team bar (left side) */}
-              <div className="flex-1 flex justify-end">
-                <div
-                  className={`h-3 rounded-l ${homeColor}`}
-                  style={{ width: `${homeWidth}%` }}
-                ></div>
+          <div
+            key={statType}
+            className="flex flex-col sm:flex-row sm:items-center w-full overflow-hidden"
+          >
+            <div className="flex justify-between items-center sm:w-full w-full">
+              {/* Home value */}
+              <div className="text-xs sm:text-sm font-medium w-10 text-right shrink-0">
+                {getDisplayValue(homeValue)}
               </div>
 
-              {/* Stat label in center */}
-              <div className="px-4 text-center min-w-0">
-                <span className="text-sm whitespace-nowrap">
+              {/* Progress bars */}
+              <div className="flex-1 flex items-center mx-2 sm:mx-4 w-full overflow-hidden">
+                <div className="flex-1 flex justify-end">
+                  <div
+                    className={`h-2 sm:h-3 rounded-l ${homeColor}`}
+                    style={{ width: `${homeWidth}%` }}
+                  ></div>
+                </div>
+
+                <div className="px-2 sm:px-4 text-center min-w-fit text-[11px] sm:text-sm whitespace-nowrap">
                   {statType === "Ball Possession" ? "Possession (%)" : statType}
-                </span>
+                </div>
+
+                <div className="flex-1">
+                  <div
+                    className={`h-2 sm:h-3 rounded-r ${awayColor}`}
+                    style={{ width: `${awayWidth}%` }}
+                  ></div>
+                </div>
               </div>
 
-              {/* Away team bar (right side) */}
-              <div className="flex-1">
-                <div
-                  className={`h-3 rounded-r ${awayColor}`}
-                  style={{ width: `${awayWidth}%` }}
-                ></div>
+              {/* Away value */}
+              <div className="text-xs sm:text-sm font-medium w-10 text-left shrink-0">
+                {getDisplayValue(awayValue)}
               </div>
-            </div>
-
-            {/* Away team value */}
-            <div className="md:w-8 w-auto text-left font-medium">
-              {getDisplayValue(awayValue)}
             </div>
           </div>
         );

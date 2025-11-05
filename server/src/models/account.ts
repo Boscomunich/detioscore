@@ -2,7 +2,7 @@ import mongoose, { Document } from "mongoose";
 
 export interface IAccount extends Document {
   id: string;
-  userId: mongoose.Types.ObjectId; // FK -> User._id
+  userId: mongoose.Types.ObjectId;
   accountId: string;
   providerId: string;
   accessToken?: string;

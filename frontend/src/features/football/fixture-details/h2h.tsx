@@ -2,7 +2,7 @@ import { Loader2 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { apiClient } from "@/api-config";
 import ScoreCard from "../score-card";
-import { type FixturesApiResponse, type FixtureResponse } from "../type";
+import type { FixtureResponse, FixturesApiResponse } from "@/types/football";
 
 // Group fixtures by country, then league, then by date
 function groupFixturesByCountryLeagueAndDate(fixtures: FixtureResponse[]) {
@@ -91,7 +91,7 @@ export default function H2HCard({
     queryKey: ["fixtures"],
     queryFn: async () => {
       const response = await apiClient.get(
-        `/livescore/get-fixture-h2h?homeId=${homeId}&awayId=${awayId}`
+        `/livescore/fixture-h2h?homeId=${homeId}&awayId=${awayId}`
       );
       return response.data;
     },

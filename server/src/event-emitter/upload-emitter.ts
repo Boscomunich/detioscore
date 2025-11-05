@@ -5,6 +5,7 @@ import competition from "../models/competition";
 import TeamSelection from "../models/teams";
 
 const proofEmitter = new EventEmitter();
+proofEmitter.setMaxListeners(1);
 
 // Handle upload job
 proofEmitter.on(

@@ -56,7 +56,7 @@ const CompetitionSchema = new mongoose.Schema(
 
     prizePool: { type: Number, default: 0 },
     hostContribution: { type: Number, default: 0 },
-    invitationCode: { type: String, required: true, unique: true },
+    invitationCode: { type: String, required: false, unique: true },
 
     participants: [
       {

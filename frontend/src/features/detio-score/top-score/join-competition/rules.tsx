@@ -3,7 +3,7 @@ import type { Dispatch, SetStateAction } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 import { Trophy, CheckCircle } from "lucide-react";
-import type { Competition } from "../../type";
+import type { Competition } from "@/types/competition";
 
 interface CompetitionRuleProps {
   setStep: Dispatch<SetStateAction<number>>;
@@ -14,32 +14,32 @@ const generalRules = [
   {
     name: "Team Selection",
     content:
-      "Participant selects the required number of teams as specified by Host",
+      "Participants must select the required number of fixtures as specified by the host for each competition.",
   },
   {
-    name: "Star Team",
+    name: "Star Fixtures",
     content:
-      "Participant must pick one team as the star team and star teams are unique per competition",
+      "Each participant must choose one team as their star team. Star teams are unique to each competition and can serve as the deciding factor in the event of a draw.",
   },
   {
-    name: "Task Completion",
+    name: "Host tasks",
     content:
-      "Participant must complete the user task and upload proof if required by Host. Failure to complete task or fraudulent upload of proof will lead to disqualification",
+      "Complete the host task and upload a clear proof of completion for tasks that require proof",
   },
   {
     name: "Point System",
     content:
-      "Every selected team earns 3 points for a win, 2 points for a draw, and 0 points for a loss. Star team points are tripled",
+      "Participants earn one point for every goal scored by their selected teams. In the case of a tie, the participant whose teams scored earlier goals will rank higher.",
   },
   {
     name: "Eligible Teams",
     content:
-      "Teams to be selected must be teams in action on the day of the competition",
+      "Only teams scheduled to play on the competition day are eligible for selection.",
   },
   {
     name: "Reward Payout",
     content:
-      "Points are calculated and rewards paid out within 24 hours after competition ends",
+      "All points are tallied, and rewards are distributed within 48 hours after the competition concludes.",
   },
 ];
 
@@ -97,32 +97,34 @@ export default function CompetitionRule({
           </CardContent>
         </Card>
 
-        <Card className="shadow-lg">
-          <CardHeader className="bg-primary text-white rounded-t-lg">
-            <CardTitle className="flex items-center gap-2 text-xl">
-              <Trophy className="h-6 w-6" />
-              Host Requirements
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="p-6 space-y-4">
-            <div className="grid gap-4">
-              {competition?.rules.map((rule, index: number) => (
-                <div className="flex items-start gap-3" key={index}>
-                  <CheckCircle className="h-5 w-5 text-green-600 mt-0.5 flex-shrink-0" />
-                  <div>
-                    <h3 className="font-semibold text-gray-900">
-                      step: {rule.step}
-                    </h3>
-                    <p className="text-gray-600">{rule.description}</p>
-                    {rule.stepVerification && (
-                      <p className="text-gray-600">upload proof</p>
-                    )}
+        {competition?.rules.length > 0 && (
+          <Card className="shadow-lg">
+            <CardHeader className="bg-primary text-white rounded-t-lg">
+              <CardTitle className="flex items-center gap-2 text-xl">
+                <Trophy className="h-6 w-6" />
+                Host Requirements
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-6 space-y-4">
+              <div className="grid gap-4">
+                {competition?.rules.map((rule, index: number) => (
+                  <div className="flex items-start gap-3" key={index}>
+                    <CheckCircle className="h-5 w-5 text-green-600 mt-0.5 flex-shrink-0" />
+                    <div>
+                      <h3 className="font-semibold text-gray-900">
+                        step: {rule.step}
+                      </h3>
+                      <p className="text-gray-600">{rule.description}</p>
+                      {rule.stepVerification && (
+                        <p className="text-gray-600">upload proof</p>
+                      )}
+                    </div>
                   </div>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
       </div>
       <Button onClick={() => setNextStep()} className="w-full h-12 z-100">
         Continue

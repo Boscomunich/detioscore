@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Calendar, MapPin, BellIcon as Whistle, Star } from "lucide-react";
+import { Calendar, MapPin, BellIcon as Whistle } from "lucide-react";
 import { useLocation } from "react-router";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
@@ -10,6 +10,8 @@ import { LazyLoadImage } from "react-lazy-load-image-component";
 import H2HCard from "./h2h";
 import MatchEventsTimeline from "./event";
 import Stats from "./stats";
+import { useLeague } from "@/features/hooks/use-leagues";
+import StarIcon from "@/components/ui/star";
 
 function formatTime(dateStr: string) {
   const date = new Date(dateStr);
@@ -128,9 +130,13 @@ const FixtureStatusDisplay = ({ fixture }: { fixture: any }) => {
 };
 
 export default function FixtureDetailsPage() {
+  const { toggleFavourite, favouriteIds } = useLeague();
+
   const [activeTab, setActiveTab] = useState("Info");
   const { state } = useLocation();
   const fixture = state.fixture;
+
+  const isFavourite = favouriteIds.has(fixture.fixture.id);
 
   const home = fixture.teams.home;
   const away = fixture.teams.away;
@@ -144,10 +150,10 @@ export default function FixtureDetailsPage() {
   const awayScore = fixture.goals?.away ?? 0;
 
   return (
-    <div className="max-w-3xl px-4 border rounded-sm my-2 w-full pb-6">
+    <div className="max-w-2xl px-4 bg-auto rounded-sm my-2 w-full pb-6 mx-auto p-4 ">
       {/* League Header */}
       <div className="flex sticky top-0 w-full items-center justify-between p-4 border-b border-border z-10 text-sm">
-        <div className="flex items-center gap-2">
+        <div className="flex items-center  gap-2">
           <LazyLoadImage
             src={league.logo}
             alt={league.name}
@@ -166,8 +172,14 @@ export default function FixtureDetailsPage() {
           </div>
         </div>
         <div className="flex items-center gap-1">
-          <Button variant="ghost" size="icon">
-            <Star className="h-4 w-4" />
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => {
+              toggleFavourite(undefined, fixture);
+            }}
+          >
+            <StarIcon filled={isFavourite} />
           </Button>
         </div>
       </div>

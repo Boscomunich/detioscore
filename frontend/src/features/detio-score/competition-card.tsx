@@ -1,8 +1,8 @@
 import { Calendar, Clock, DollarSign, Trophy, Users } from "lucide-react";
-import type { Competition } from "./type";
 import { authClient } from "@/lib/auth-client";
 import { useNavigate } from "react-router";
 import { cn } from "@/lib/utils";
+import type { Competition } from "@/types/competition";
 
 type Session = typeof authClient.$Infer.Session | null;
 
@@ -59,8 +59,7 @@ export default function CompetitionCard({
   let userStatus: string;
   let path: string;
 
-  path = `${competition.type}/${competition._id}`;
-  path = path.toLowerCase();
+  path = `${competition.type}/${competition._id}`.toLowerCase();
 
   if (session?.user.id === competition.createdBy) {
     const participant = competition.participants.find(
@@ -68,8 +67,7 @@ export default function CompetitionCard({
     );
     userStatus = "owner";
     if (participant?.status === "joined") {
-      path = `${competition._id}/details`;
-      path = path.toLowerCase();
+      path = `${competition._id}/details`.toLowerCase();
     }
   } else {
     const participant = competition.participants.find(
@@ -80,8 +78,7 @@ export default function CompetitionCard({
       userStatus = "guest";
     } else if (participant.status === "joined") {
       userStatus = participant.status;
-      path = `${competition._id}/details`;
-      path = path.toLowerCase();
+      path = `${competition._id}/details`.toLowerCase();
     } else {
       userStatus = participant.status;
     }
@@ -94,7 +91,7 @@ export default function CompetitionCard({
   return (
     <div
       key={competition._id}
-      className="flex flex-col cursor-pointer border rounded-lg shadow hover:shadow-lg transition-shadow p-2 w-full mb-4"
+      className="group flex flex-col cursor-pointer border rounded-md shadow-sm hover:shadow-md transition-all duration-200 p-4 bg-auto/90 hover:bg-auto w-full mb-4"
       onClick={() => {
         navigate(path, {
           state: { competition, userStatus, path },
@@ -102,14 +99,15 @@ export default function CompetitionCard({
       }}
     >
       {/* Header */}
-      <div className="flex justify-between gap-2 items-start">
-        <h2 className="md:text-lg text-sm font-semibold leading-tight">
+      <div className="flex justify-between items-start flex-wrap gap-3">
+        <h2 className="text-base md:text-xl font-semibold leading-7 font-syne">
           {competition.name}
         </h2>
+
         <div className="flex items-center gap-1 flex-wrap justify-end">
           <span
             className={cn(
-              "px-1 py-0.5 text-[10px] font-medium rounded border",
+              "px-2 py-0.5 text-[11px] font-medium rounded-full border",
               getVisibilityColor(competition.isPublic)
             )}
           >
@@ -117,34 +115,36 @@ export default function CompetitionCard({
           </span>
           <span
             className={cn(
-              "px-1 py-0.5 text-[10px] font-medium rounded border",
+              "px-2 py-0.5 text-[11px] font-medium rounded-full border",
               getUserStatusColor(userStatus)
             )}
           >
             {userStatus === "owner"
               ? "Owner"
               : userStatus === "pending"
-              ? "Select teams"
+              ? "Select Teams"
               : userStatus === "joined"
-              ? "View table"
+              ? "View Table"
               : "Join"}
           </span>
           <span
-            className={`px-1 py-0.5 text-[10px] font-medium rounded ${getTypeColor(
-              competition.type
-            )}`}
+            className={cn(
+              "px-2 py-0.5 text-[11px] font-medium rounded-full border",
+              getTypeColor(competition.type)
+            )}
           >
             {competition.type}
           </span>
+
           {/* Participant cap inline */}
-          <div className="flex items-center gap-1">
-            <Users className="w-3 h-3 text-gray-600" />
-            <span className="text-[11px] font-medium">
+          <div className="flex items-center gap-1 ml-1">
+            <Users className="size-3 text-gray-700 dark:text-gray-400" />
+            <span className="text-[11px] font-medium text-gray-700 dark:text-gray-400">
               {participantCount}/{cap}
             </span>
-            <div className="w-8 h-1 bg-gray-200 rounded-full overflow-hidden">
+            <div className="w-10 h-1 bg-gray-200 rounded-full overflow-hidden">
               <div
-                className="h-full bg-blue-500"
+                className="h-full bg-blue-500 transition-all"
                 style={{ width: `${percent}%` }}
               />
             </div>
@@ -152,21 +152,23 @@ export default function CompetitionCard({
         </div>
       </div>
 
+      {/* Divider */}
+      <div className="my-2 h-px bg-gray-100" />
+
       {/* Main Content */}
-      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-1">
-        {/* Entry Fee */}
-        <div className="flex justify-between gap-2">
-          <div className="flex items-start">
-            <DollarSign className="w-3 md:w-5 md:h-5 h-3 mt-1 text-green-600" />
+      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
+        {/* Entry Fee & Prize Pool */}
+        <div className="flex flex-wrap gap-6 text-sm">
+          <div className="flex items-center gap-2">
+            <DollarSign className="size-4 text-green-600" />
             <div>
               <p className="text-xs text-muted-foreground">Entry Fee</p>
               <p className="font-semibold text-sm">{competition.entryFee} DC</p>
             </div>
           </div>
 
-          {/* Prize Pool */}
-          <div className="flex items-start">
-            <Trophy className="w-3 md:w-5 md:h-5 h-3 mt-1 text-yellow-600" />
+          <div className="flex items-center gap-2">
+            <Trophy className="size-4 text-yellow-600" />
             <div>
               <p className="text-xs text-muted-foreground">Prize Pool</p>
               <p className="font-semibold text-sm">
@@ -178,28 +180,29 @@ export default function CompetitionCard({
 
         {/* League Config */}
         {competition.leagueConfig && (
-          <div className="flex items-center gap-2">
-            <Clock className="w-4 h-4" />
+          <div className="flex items-center gap-2 text-xs text-gray-700">
+            <Clock className="w-4 h-4 text-gray-500" />
             <span>
-              {competition.leagueConfig.durationDays} days /{" "}
+              {competition.leagueConfig.durationDays} days •{" "}
               {competition.leagueConfig.matchRequirement} matches
             </span>
           </div>
         )}
+      </div>
 
-        <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground mb-1">
-          <div className="flex items-center gap-1">
-            <Calendar className="w-3 h-3" />
-            <span>Start {formatDate(competition.startDate)}</span>
-          </div>
-          <div className="flex items-center gap-1">
-            <Calendar className="w-3 h-3" />
-            <span>End {formatDate(competition.endDate)}</span>
-          </div>
-          <div className="flex items-center gap-1">
-            <Calendar className="w-3 h-3" />
-            <span>Created {formatDate(competition.createdAt)}</span>
-          </div>
+      {/* Dates */}
+      <div className="flex flex-wrap items-center gap-3 text-[13px] text-gray-700 dark:text-gray-400 mt-3">
+        <div className="flex items-center gap-1">
+          <Calendar className="w-3.5 h-3.5" />
+          <span>Start: {formatDate(competition.startDate)}</span>
+        </div>
+        <div className="flex items-center gap-1">
+          <Calendar className="w-3.5 h-3.5" />
+          <span>End: {formatDate(competition.endDate)}</span>
+        </div>
+        <div className="flex items-center gap-1">
+          <Calendar className="w-3.5 h-3.5" />
+          <span>Created: {formatDate(competition.createdAt)}</span>
         </div>
       </div>
     </div>

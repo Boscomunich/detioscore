@@ -1,3 +1,4 @@
+import { authClient } from "@/lib/auth-client";
 import { cn } from "@/lib/utils";
 import { House, Star, Table, Tally4, UserRoundCog } from "lucide-react";
 import { NavLink } from "react-router";
@@ -30,9 +31,17 @@ const links = [
   },
 ];
 
+const admin = {
+  name: "Admin",
+  link: "/admin",
+  icon: Table,
+};
+
 export default function BottomTabs() {
+  const { data: session } = authClient.useSession();
+  const user = session?.user;
   return (
-    <div className="h-16 w-full md:hidden fixed bottom-0 px-4 py-2 flex gap-2 justify-between bg-sidebar-accent z-100">
+    <div className="h-16 w-full lg:hidden fixed bottom-0 px-4 py-2 flex gap-2 justify-between bg-sidebar-accent z-100">
       {links.map((item, index) => (
         <NavLink
           to={item.link}
@@ -52,6 +61,27 @@ export default function BottomTabs() {
           <span className="text-xs">{item.name}</span>
         </NavLink>
       ))}
+      {
+        //@ts-expect-error user role exist
+        user?.role === "admin" && (
+          <NavLink
+            to={admin.link}
+            end={admin.link === "/"}
+            className={({ isActive }) =>
+              cn(
+                `flex flex-col items-center justify-center rounded-xs px-2 flex-1`,
+                {
+                  "bg-orange-100 text-primary": isActive,
+                  "hover:bg-secondary": !isActive,
+                }
+              )
+            }
+          >
+            <admin.icon size={20} />
+            <span className="text-xs">{admin.name}</span>
+          </NavLink>
+        )
+      }
     </div>
   );
 }

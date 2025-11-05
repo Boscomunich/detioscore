@@ -3,7 +3,8 @@ import { useEffect, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { Loader2 } from "lucide-react";
-import type { FootballLineupProps, Player, TeamData } from "../type";
+import { useQuery } from "@tanstack/react-query";
+import type { FootballLineupProps, Player, TeamData } from "@/types/football";
 
 // Parse formation string to get grid structure
 function parseFormation(formation: string | null) {
@@ -237,9 +238,16 @@ function SubstitutePlayersSection({ teamData }: { teamData: TeamData }) {
 
 export default function LineupView({ fixture }: { fixture: any }) {
   const [isConfirmationTime, setIsConfirmationTime] = useState(false);
-  const [data, setData] = useState<FootballLineupProps | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+
+  const { data, isLoading, error } = useQuery<FootballLineupProps | null>({
+    queryKey: ["fixtures-lineups", fixture.id],
+    queryFn: async () => {
+      const response = await apiClient.get(
+        `/livescore/lineups?fixtureId=${fixture.id}&isConfirmationTime=${isConfirmationTime}`
+      );
+      return response.data;
+    },
+  });
 
   useEffect(() => {
     const checkConfirmationTime = () => {
@@ -254,32 +262,6 @@ export default function LineupView({ fixture }: { fixture: any }) {
     return () => clearInterval(interval);
   }, [fixture.date]);
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        setIsLoading(true);
-        setError(null);
-
-        const response = await apiClient.get(
-          `/livescore/get-lineups?fixtureId=${fixture.id}&isConfirmationTime=${isConfirmationTime}`
-        );
-
-        if (!response.data || !response.data.response) {
-          throw new Error("No lineup data available for this fixture.");
-        }
-
-        setData(response.data);
-      } catch (err: any) {
-        console.error("Error fetching lineup data:", err);
-        setError(err.message || "Failed to fetch lineup data.");
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchData();
-  }, [fixture.id, isConfirmationTime]);
-
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64 text-lg">
@@ -291,14 +273,14 @@ export default function LineupView({ fixture }: { fixture: any }) {
   if (error) {
     return (
       <div className="flex items-center justify-center h-64 text-red-500 text-lg">
-        {error}
+        {error.message}
       </div>
     );
   }
 
   if (!data || data.response.length === 0) {
     return (
-      <div className="flex items-center justify-center h-64 text-gray-300 text-lg">
+      <div className="flex items-center justify-center h-24 text-sm">
         No lineup available for this fixture.
       </div>
     );

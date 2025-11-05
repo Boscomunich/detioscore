@@ -24,6 +24,16 @@ import { NotificationsPage } from "./features/profile/notification";
 import { EmailVerificationPage } from "./features/auth/verify-email";
 import { UserTeamInfoPage } from "./features/detio-score/ranking-details";
 import LeagueDetails from "./features/league/details";
+import AdminLayout from "./features/admin/layout";
+import { Admin } from "./features/admin";
+import AllUsers from "./features/admin/users";
+import PendingTransactions from "./features/admin/transactions";
+import ActiveCompetitions from "./features/admin/competition";
+import UserDetailView from "./features/admin/users/details";
+import { TransactionDetailView } from "./features/admin/transactions/details";
+import CompetitionDetails from "./features/admin/competition/details";
+import { CompleteProfileForm } from "./features/auth/complete-profile";
+import AuthLayout from "./features/auth-layout";
 
 function ScrollToTop() {
   const { pathname } = useLocation();
@@ -46,39 +56,60 @@ function App() {
             <Route path="/:id" element={<FixtureDetailsPage />} />
           </Route>
 
-          <Route path="detio-score" element={<DetioScore />} />
-          <Route
-            path="detio-score/topscore/create-new-competition"
-            element={<CreateTopScoreCompetitionPage />}
-          />
-          <Route path="detio-score/topscore/:id" element={<JoinTopScore />} />
-          <Route path="detio-score/:id/details" element={<CompetitionInfo />} />
-          <Route
-            path="detio-score/participant"
-            element={<UserTeamInfoPage />}
-          />
-          <Route
-            path="detio-score/mango-set/create-new-competition"
-            element={<CreateManGoSetCompetitionPage />}
-          />
-          <Route path="detio-score/mangoset/:id" element={<JoinManGoSet />} />
+          <Route path="" element={<AuthLayout />}>
+            <Route path="detio-score" element={<DetioScore />} />
+            <Route
+              path="detio-score/topscore/create-new-competition"
+              element={<CreateTopScoreCompetitionPage />}
+            />
+            <Route path="detio-score/topscore/:id" element={<JoinTopScore />} />
+            <Route
+              path="detio-score/:id/details"
+              element={<CompetitionInfo />}
+            />
+            <Route
+              path="detio-score/participant"
+              element={<UserTeamInfoPage />}
+            />
+            <Route
+              path="detio-score/mango-set/create-new-competition"
+              element={<CreateManGoSetCompetitionPage />}
+            />
+            <Route path="detio-score/mangoset/:id" element={<JoinManGoSet />} />
 
-          <Route path="favourite" element={<Favourite />} />
-          <Route path="league" element={<League />} />
-          <Route path="league/:leagueName" element={<LeagueDetails />} />
-          <Route path="profile" element={<Profile />} />
-          <Route path="deposit" element={<DepositPage />} />
-          <Route path="withdraw" element={<WithdrawalPage />} />
-          <Route path="transaction-history" element={<TransactionHistory />} />
-          <Route path="notifications" element={<NotificationsPage />} />
+            <Route path="favourite" element={<Favourite />} />
+            <Route path="league" element={<League />} />
+            <Route path="league/:leagueName" element={<LeagueDetails />} />
+            <Route path="profile" element={<Profile />} />
+            <Route path="deposit" element={<DepositPage />} />
+            <Route path="withdraw" element={<WithdrawalPage />} />
+            <Route
+              path="transaction-history"
+              element={<TransactionHistory />}
+            />
+            <Route path="notifications" element={<NotificationsPage />} />
+          </Route>
 
           <Route path="signup" element={<SignupForm />} />
+          <Route path="select-country" element={<CompleteProfileForm />} />
           <Route path="signin" element={<SigninForm />} />
           <Route path="forgot-password" element={<ForgotPasswordForm />} />
           <Route path="reset-password" element={<ResetPasswordForm />} />
           <Route path="verify-email" element={<EmailVerificationPage />} />
 
           <Route path="*" element={<div>Not Found</div>} />
+        </Route>
+        <Route path="/admin" element={<AdminLayout />}>
+          <Route index element={<Admin />} />
+          <Route path="users" element={<AllUsers />} />
+          <Route path="users/:userId" element={<UserDetailView />} />
+          <Route path="transactions" element={<PendingTransactions />} />
+          <Route
+            path="transactions/:txnId"
+            element={<TransactionDetailView />}
+          />
+          <Route path="competition" element={<ActiveCompetitions />} />
+          <Route path="competition/:compId" element={<CompetitionDetails />} />
         </Route>
       </Routes>
     </BrowserRouter>

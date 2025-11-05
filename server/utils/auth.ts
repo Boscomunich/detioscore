@@ -4,6 +4,7 @@ import { admin, createAuthMiddleware, jwt } from "better-auth/plugins";
 import mongoose from "../src/database";
 import { emailEmitter } from "../src/event-emitter/email-emitter";
 import { eventEmitter } from "../src/event-emitter";
+import { userEmitter } from "../src/event-emitter/user-emitter";
 
 export const createAuth = () => {
   const db = mongoose.connection.db;
@@ -22,9 +23,22 @@ export const createAuth = () => {
             ?.user;
           if (user) {
             eventEmitter.emit("create-wallet", user.id);
+            userEmitter.emit("init-rank", user.id);
+          }
+        }
+
+        if (ctx.path.startsWith("/update-user")) {
+          const user = ctx?.context?.newSession?.user;
+
+          console.log("Updated user:", user);
+          if (user?.country && user.country !== "Unknown") {
+            console.log("i was called");
+            eventEmitter.emit("create-wallet", user.id);
+            userEmitter.emit("init-rank", user.id);
           }
         }
       }),
+      // after: updateUser(async (ctx) => {})
     },
 
     plugins: [
@@ -50,6 +64,12 @@ export const createAuth = () => {
           required: false,
           defaultValue: "USER",
           input: false,
+        },
+        country: {
+          type: "string",
+          required: false,
+          defaultValue: "Unknown",
+          input: true,
         },
       },
     },
@@ -98,7 +118,7 @@ export const createAuth = () => {
         clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
         accessType: "offline",
         prompt: "select_account consent",
-        redirectURI: "https://server.ditioscore.com/api/auth/callback/google",
+        redirectURI: `https://server.ditioscore.com/api/auth/callback/google`,
       },
     },
     trustedOrigins: [

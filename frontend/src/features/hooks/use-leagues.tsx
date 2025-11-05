@@ -5,7 +5,7 @@ import {
   useEffect,
   type ReactNode,
 } from "react";
-import type { Country, FixtureResponse, Leagues } from "../football/type";
+import type { Country, FixtureResponse, Leagues } from "../../types/football";
 import {
   deleteFixture,
   getFixtureById,
@@ -37,7 +37,10 @@ export function LeagueProvider({ children }: { children: ReactNode }) {
 
     async function loadFavourites() {
       const stored = await getFixtures();
-      if (isMounted) setFavouriteIds(new Set(stored.map((f) => f.fixtureId)));
+      if (isMounted) {
+        // Use fixture.fixture.id instead of fixtureId
+        setFavouriteIds(new Set(stored.map((f) => f.fixture.id)));
+      }
     }
 
     loadFavourites();
@@ -47,31 +50,43 @@ export function LeagueProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
-  const toggleFavourite = async (id?: number, fixture?: FixtureResponse) => {
+  async function toggleFavourite(id?: number, fixture?: FixtureResponse) {
     if (!id && !fixture) return;
-
     const fixtureId = id ?? fixture!.fixture.id;
-    const exists = await getFixtureById(fixtureId);
 
-    if (exists) {
-      await deleteFixture(fixtureId);
-      setFavouriteIds((prev) => {
-        const copy = new Set(prev);
-        copy.delete(fixtureId);
-        return copy;
-      });
-    } else {
-      if (fixture) {
-        await saveFixture(fixture);
+    try {
+      // Check if the fixture already exists in IndexedDB
+      const existing = await getFixtureById(fixtureId);
+
+      if (existing) {
+        // Remove from DB
+        await deleteFixture(fixtureId);
+
+        // Update UI state
+        setFavouriteIds((prev) => {
+          const updated = new Set(prev);
+          updated.delete(fixtureId);
+          return updated;
+        });
       } else {
-        console.warn(
-          `Cannot save fixture ${fixtureId}: full fixture data not provided`
-        );
-        return;
+        // Add to DB only if full fixture data is provided
+        if (fixture) {
+          setFavouriteIds((prev) => {
+            const updated = new Set(prev);
+            updated.add(fixtureId);
+            return updated;
+          });
+          await saveFixture(fixture);
+        } else {
+          console.warn(
+            `Cannot save fixture ${fixtureId}: full fixture data not provided`
+          );
+        }
       }
-      setFavouriteIds((prev) => new Set(prev).add(fixtureId));
+    } catch (err) {
+      console.error("Error toggling favourite:", err);
     }
-  };
+  }
 
   return (
     <LeagueContext.Provider

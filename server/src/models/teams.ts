@@ -14,8 +14,14 @@ export interface ITeamEntry {
 }
 
 export interface ITeamPoints {
-  teamId: number;
+  fixtureId: number;
+  score: {
+    home: number;
+    away: number;
+  };
   points: number;
+  isLive: boolean;
+  isFT: boolean;
 }
 
 export interface IProof {
@@ -29,11 +35,12 @@ export interface ITeamSelection extends Document {
   user: mongoose.Types.ObjectId;
   stakedAmount: number;
   teams: ITeamEntry[];
-  starTeam?: number | null;
+  starTeam?: string | null;
   teamPoints: ITeamPoints[];
   totalPoints: number;
   rank?: number | null;
   stepsVerified: boolean;
+  isDisqualified: boolean;
   proofs: IProof[];
   createdAt: Date;
   updatedAt: Date;
@@ -63,20 +70,20 @@ const TeamSelectionSchema: Schema<ITeamSelection> = new Schema(
             name: { type: String, required: true },
             logo: { type: String, default: "" },
           },
-          matchVenue: { type: String, required: false },
+          matchVenue: { type: String },
         },
       ],
       default: [],
     },
 
     starTeam: {
-      type: Number,
+      type: String,
       default: null,
       validate: {
-        validator: function (value: number) {
+        validator: function (value: string) {
           const doc = this as ITeamSelection;
           if (!value) return true;
-          return doc.teams?.some((t) => t.selectedTeam.teamId === value);
+          return doc.teams?.some((t) => String(t.fixtureId) === String(value));
         },
         message: "Star team must be one of the selected teams",
       },
@@ -85,7 +92,14 @@ const TeamSelectionSchema: Schema<ITeamSelection> = new Schema(
     teamPoints: {
       type: [
         {
-          teamId: { type: Number, required: true },
+          fixtureId: { type: Number, required: true },
+          score: {
+            type: {
+              home: { type: Number, required: true },
+              away: { type: Number, required: true },
+            },
+            required: true,
+          },
           points: { type: Number, default: 0 },
           isLive: { type: Boolean, default: false },
           isFT: { type: Boolean, default: false },
@@ -109,23 +123,15 @@ const TeamSelectionSchema: Schema<ITeamSelection> = new Schema(
     },
 
     stepsVerified: { type: Boolean, default: false },
+    isDisqualified: { type: Boolean, default: false },
   },
   { timestamps: true }
 );
 
-// Ensure one TeamSelection per (competition, user)
+//Ensure one TeamSelection per (competition, user)
 TeamSelectionSchema.index({ competition: 1, user: 1 }, { unique: true });
 
-// Ensure unique starTeam per competition (ignores null)
-TeamSelectionSchema.index(
-  { competition: 1, starTeam: 1 },
-  {
-    unique: true,
-    partialFilterExpression: { starTeam: { $type: "number" } },
-  }
-);
-
-// Handle duplicate entries nicely
+//Handle duplicate key errors nicely
 TeamSelectionSchema.post("save", function (error: any, doc: any, next: any) {
   if (error.code === 11000) {
     if (error.keyPattern?.competition && error.keyPattern?.starTeam) {

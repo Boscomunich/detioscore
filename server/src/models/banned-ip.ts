@@ -6,7 +6,7 @@ const BannedIPSchema = new mongoose.Schema(
     user: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
     reason: { type: String, default: "Repeated offenses" },
     banDate: { type: Date, default: Date.now },
-    expiresAt: { type: Date, default: null }, // null means permanent ban
+    expiresAt: { type: Date, default: null },
   },
   { timestamps: true }
 );

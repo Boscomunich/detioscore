@@ -208,3 +208,5 @@ export interface TeamStats {
 export interface StatsResponse {
   response: TeamStats[];
 }
+
+export {};

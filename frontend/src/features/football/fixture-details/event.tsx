@@ -2,14 +2,14 @@ import { useQuery } from "@tanstack/react-query";
 import { apiClient } from "@/api-config";
 import { Timeline, TimelineItem } from "@/components/ui/timeline";
 import { Square, Replace, ShieldAlert, Loader2 } from "lucide-react";
-import type { FixtureResponse } from "../type";
+import type { FixtureResponse } from "@/types/football";
 
 const MatchEventsTimeline = ({ fixture }: { fixture: FixtureResponse }) => {
   const { data, isLoading } = useQuery({
     queryKey: ["fixtures-events", fixture.fixture.id],
     queryFn: async () => {
       const response = await apiClient.get(
-        `/livescore/get-fixture-event/${fixture.fixture.id}`
+        `/livescore/fixture-event/${fixture.fixture.id}`
       );
       return response.data.response;
     },
@@ -29,7 +29,7 @@ const MatchEventsTimeline = ({ fixture }: { fixture: FixtureResponse }) => {
 
   if (!events || events.length === 0) {
     return (
-      <div className="p-4 text-center text-muted-foreground text-[10px]">
+      <div className="flex items-center justify-center h-24 text-sm">
         No match events available
       </div>
     );

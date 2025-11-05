@@ -1,88 +1,73 @@
 import Dexie, { type Table } from "dexie";
-import type { FixtureResponse } from "../football/type";
+import type { FixtureResponse } from "../../types/football";
 
-export interface FixtureEntity {
+export interface StoredFixture extends FixtureResponse {
   fixtureId: number;
-  date: string;
-  status: string;
-  venue: string;
-
-  leagueId: number;
-  leagueName: string;
-  leagueCountry: string;
-
-  homeTeamId: number;
-  homeTeamName: string;
-  homeTeamLogo: string;
-
-  awayTeamId: number;
-  awayTeamName: string;
-  awayTeamLogo: string;
-
-  goalsHome: number | null;
-  goalsAway: number | null;
 }
 
 class FootballDB extends Dexie {
-  fixtures!: Table<FixtureEntity, number>;
+  fixtures!: Table<StoredFixture, number>;
 
   constructor() {
     super("FootballApp");
-    this.version(1).stores({
-      fixtures: "fixtureId, leagueId, homeTeamId, awayTeamId",
+    this.version(2).stores({
+      fixtures: "fixtureId, league.id, teams.home.id, teams.away.id",
     });
   }
 }
 
 const db = new FootballDB();
+export default db;
 
-export async function saveFixture(apiFixture: FixtureResponse) {
-  const normalized: FixtureEntity = {
-    fixtureId: apiFixture.fixture.id,
-    date: apiFixture.fixture.date,
-    status: apiFixture.fixture.status.long,
-    venue: apiFixture.fixture.venue?.name || "Unknown",
-
-    leagueId: apiFixture.league.id,
-    leagueName: apiFixture.league.name,
-    leagueCountry: apiFixture.league.country,
-
-    homeTeamId: apiFixture.teams.home.id,
-    homeTeamName: apiFixture.teams.home.name,
-    homeTeamLogo: apiFixture.teams.home.logo,
-
-    awayTeamId: apiFixture.teams.away.id,
-    awayTeamName: apiFixture.teams.away.name,
-    awayTeamLogo: apiFixture.teams.away.logo,
-
-    goalsHome: apiFixture.goals.home,
-    goalsAway: apiFixture.goals.away,
+/**
+ * Save a fixture into IndexedDB.
+ * Adds a top-level `fixtureId` for Dexie key.
+ */
+export async function saveFixture(fixture: FixtureResponse): Promise<void> {
+  const record: StoredFixture = {
+    ...fixture,
+    fixtureId: fixture.fixture.id,
   };
 
-  await db.fixtures.put(normalized);
+  await db.fixtures.put(record);
 }
 
-export async function getFixtures(): Promise<FixtureEntity[]> {
+/**
+ * Get all fixtures
+ */
+export async function getFixtures(): Promise<StoredFixture[]> {
   return await db.fixtures.toArray();
 }
 
+/**
+ * Get a fixture by its ID
+ */
 export async function getFixtureById(
   id: number
-): Promise<FixtureEntity | undefined> {
+): Promise<StoredFixture | undefined> {
   return await db.fixtures.get(id);
 }
 
+/**
+ * Update a fixture partially
+ */
 export async function updateFixture(
-  fixtureId: number,
-  updates: Partial<FixtureEntity>
+  id: number,
+  updates: Partial<StoredFixture>
 ): Promise<void> {
-  await db.fixtures.update(fixtureId, updates);
+  await db.fixtures.update(id, updates);
 }
 
-export async function deleteFixture(fixtureId: number): Promise<void> {
-  await db.fixtures.delete(fixtureId);
+/**
+ * Delete a fixture by its ID
+ */
+export async function deleteFixture(id: number): Promise<void> {
+  await db.fixtures.delete(id);
 }
 
+/**
+ * Clear all fixtures
+ */
 export async function clearAllFixtures(): Promise<void> {
   await db.fixtures.clear();
 }

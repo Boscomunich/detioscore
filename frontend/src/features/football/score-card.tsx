@@ -1,12 +1,13 @@
 import { useCallback, type JSX } from "react";
 import { Button } from "@/components/ui/button";
-import { Star, Clock } from "lucide-react";
+import { Clock } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useNavigate } from "react-router";
 import { Badge } from "@/components/ui/badge";
 import { LazyLoadImage } from "react-lazy-load-image-component";
-import type { FixtureResponse } from "./type";
+import type { FixtureResponse } from "../../types/football";
 import { useLeague } from "../hooks/use-leagues";
+import StarIcon from "../../components/ui/star";
 
 export default function ScoreCard({ fixture }: { fixture: FixtureResponse }) {
   const navigate = useNavigate();
@@ -90,11 +91,11 @@ export default function ScoreCard({ fixture }: { fixture: FixtureResponse }) {
 
   return (
     <div
-      className="bg-card border-border border rounded-sm hover:bg-accent/50 transition-colors p-0 flex items-center justify-between w-full px-4 py-3"
+      className="bg-auto border-border border rounded-sm hover:bg-card/50 transition-colors p-0 flex items-center justify-between w-full px-4 py-3"
       onClick={() => navigate(`/${fixture.fixture.id}`, { state: { fixture } })}
     >
       {/* Status */}
-      <div className="flex items-center min-w-[100px]">
+      <div className="flex items-center min-w-[50px] shrink-0 mx-2">
         {getStatusDisplay()}
       </div>
 
@@ -146,15 +147,10 @@ export default function ScoreCard({ fixture }: { fixture: FixtureResponse }) {
         className="p-1 h-auto"
         onClick={(e) => {
           e.stopPropagation();
-          toggleFavourite(undefined, fixture);
+          toggleFavourite(fixture.fixture.id, fixture);
         }}
       >
-        <Star
-          className={cn(
-            "w-5 h-5",
-            isFavourite ? "text-yellow-400" : "text-muted-foreground"
-          )}
-        />
+        <StarIcon filled={isFavourite} size={36} className={cn()} />
       </Button>
     </div>
   );

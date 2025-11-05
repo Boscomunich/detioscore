@@ -5,6 +5,7 @@ import {
   sendWelcomeEmail,
 } from "../mail-services/mail";
 export const emailEmitter = new EventEmitter();
+emailEmitter.setMaxListeners(1);
 
 emailEmitter.on(
   "send-welcome-email",

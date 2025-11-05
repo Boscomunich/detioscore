@@ -40,3 +40,38 @@ export const sessionMiddleware = (auth: any) => {
     }
   };
 };
+
+export const adminSessionMiddleware = (auth: any) => {
+  return async (
+    req: AuthenticatedRequest,
+    res: Response,
+    next: NextFunction
+  ) => {
+    try {
+      const fetchHeaders = new Headers();
+      for (const [key, value] of Object.entries(req.headers)) {
+        if (Array.isArray(value)) {
+          value.forEach((v) => fetchHeaders.append(key, v));
+        } else if (value) {
+          fetchHeaders.append(key, value as string);
+        }
+      }
+
+      const sessionData = await auth.api.getSession({ headers: fetchHeaders });
+
+      if (!sessionData) {
+        return res.status(401).json({ error: "No active session" });
+      }
+
+      if (sessionData.user.role !== "admin") {
+        return res.status(403).json({ error: "unauthorized to request" });
+      }
+
+      req.user = sessionData.user;
+      next();
+    } catch (err: any) {
+      console.error("Session validation failed:", err);
+      return res.status(401).json({ error: "Invalid or expired session" });
+    }
+  };
+};

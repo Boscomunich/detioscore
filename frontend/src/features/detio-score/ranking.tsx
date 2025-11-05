@@ -12,42 +12,7 @@ import { Trophy, Star, Users, Target } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { LazyLoadImage } from "react-lazy-load-image-component";
 import { useNavigate } from "react-router";
-
-interface TeamPoints {
-  teamId: string;
-  points: number;
-}
-
-interface RankingEntry {
-  _id: string;
-  rank: number;
-  user: {
-    username: string;
-    avatar?: string;
-  };
-  teams: {
-    teamId: number;
-    name: string;
-    logo?: string;
-    opponent: {
-      teamId: number;
-      name: string;
-      logo?: string;
-    };
-    matchVenue: string;
-  }[];
-  starTeam?: number | null;
-  teamPoints: TeamPoints[];
-  totalPoints: number;
-  stakedAmount: number;
-  joinedAt: string;
-}
-
-interface TeamRankingsTableProps {
-  rankings: RankingEntry[];
-  competitionType: string;
-  className?: string;
-}
+import type { TeamRankingsTableProps } from "@/types/competition";
 
 export function TeamRankingsTable({
   rankings,
@@ -84,8 +49,8 @@ export function TeamRankingsTable({
       ) : (
         <div className="rounded-md border overflow-x-auto">
           <Table className="min-w-[500px]">
-            <TableHeader className="hidden md:table-header-group">
-              <TableRow>
+            <TableHeader className="hidden md:table-header-group bg-background/50">
+              <TableRow className="text-base font-bold">
                 <TableHead className="w-20">Rank</TableHead>
                 <TableHead>Participant</TableHead>
                 <TableHead>Teams</TableHead>
@@ -99,7 +64,7 @@ export function TeamRankingsTable({
                 <TableRow
                   key={entry._id}
                   className={cn(
-                    "hover:bg-muted/50 border-b md:table-row flex flex-col gap-1 md:gap-0 p-2 md:p-0"
+                    "hover:bg-muted/50 border-b md:table-row flex flex-col gap-1 md:gap-0 p-2 md:p-0 cursor-pointer"
                   )}
                   onClick={() =>
                     navigate("/detio-score/participant", { state: entry })
@@ -144,38 +109,102 @@ export function TeamRankingsTable({
                       </span>
                     </div>
                   </TableCell>
-
                   {/* Teams */}
                   <TableCell className="px-2 sm:px-4">
-                    <div className="flex gap-1 sm:gap-2 overflow-x-auto pb-1">
-                      {entry.teams.map((team, index) => (
-                        <div
-                          key={index}
-                          className={cn(
-                            "flex-shrink-0 relative my-1",
-                            entry.starTeam === team.teamId
-                              ? "ring ring-yellow-500 rounded-full"
-                              : ""
-                          )}
-                        >
-                          <div className="size-6 sm:size-7 rounded-full bg-muted flex items-center justify-center overflow-hidden border">
-                            {team.logo ? (
-                              <LazyLoadImage
-                                src={team.logo}
-                                alt={team.name}
-                                className="w-full h-full object-cover"
-                              />
-                            ) : (
-                              <span className="text-[10px] sm:text-xs font-bold text-muted-foreground">
-                                {team.name.slice(0, 2).toUpperCase()}
-                              </span>
-                            )}
+                    <div className="flex gap-3 md:gap-4 sm:gap-4 overflow-x-auto pb-1">
+                      {entry.teams.map((team, index) => {
+                        // Find teamPoints for this fixture
+                        const teamPoint = entry.teamPoints?.find(
+                          (tp) =>
+                            String(tp.fixtureId) === String(team.fixtureId)
+                        );
+
+                        const homeScore = teamPoint?.score?.home ?? null;
+                        const awayScore = teamPoint?.score?.away ?? null;
+                        const isLive = teamPoint?.isLive ?? false;
+                        const isFT = teamPoint?.isFT ?? false;
+
+                        return (
+                          <div
+                            key={index}
+                            className="flex flex-col items-center justify-center relative"
+                          >
+                            <div className="flex items-center gap-1">
+                              {/* Home */}
+                              <div
+                                className={cn(
+                                  "flex-shrink-0 relative",
+                                  entry.starFixture === team.fixtureId
+                                    ? "ring ring-yellow-500 rounded-full"
+                                    : ""
+                                )}
+                              >
+                                <div className="size-7 sm:size-8 rounded-full bg-muted flex items-center justify-center overflow-hidden border">
+                                  {team.home.logo ? (
+                                    <LazyLoadImage
+                                      src={team.home.logo}
+                                      alt={team.home.name}
+                                      className="w-full h-full object-cover"
+                                    />
+                                  ) : (
+                                    <span className="text-[10px] sm:text-xs font-bold text-muted-foreground">
+                                      {team.home.name.slice(0, 2).toUpperCase()}
+                                    </span>
+                                  )}
+                                </div>
+                              </div>
+
+                              {/* Score */}
+                              <div className="flex flex-col items-center justify-center">
+                                <p className="text-xs font-semibold">
+                                  {homeScore != null && awayScore != null
+                                    ? `${homeScore}-${awayScore}`
+                                    : "vs"}
+                                </p>
+
+                                {/* LIVE or FT indicator */}
+                                {isLive && (
+                                  <span className="text-xs bg-red-500 font-medium font-syne animate-pulse size-2 rounded-full" />
+                                )}
+                                {!isLive && isFT && (
+                                  <span className="text-xs text-gray-500 font-medium">
+                                    FT
+                                  </span>
+                                )}
+                              </div>
+
+                              {/* Away */}
+                              <div
+                                className={cn(
+                                  "flex-shrink-0 relative",
+                                  entry.starFixture === team.fixtureId
+                                    ? "ring ring-yellow-500 rounded-full"
+                                    : ""
+                                )}
+                              >
+                                <div className="size-7 sm:size-8 rounded-full bg-muted flex items-center justify-center overflow-hidden border">
+                                  {team.away.logo ? (
+                                    <LazyLoadImage
+                                      src={team.away.logo}
+                                      alt={team.away.name}
+                                      className="w-full h-full object-cover"
+                                    />
+                                  ) : (
+                                    <span className="text-[10px] sm:text-xs font-bold text-muted-foreground">
+                                      {team.away.name.slice(0, 2).toUpperCase()}
+                                    </span>
+                                  )}
+                                </div>
+                              </div>
+
+                              {/* Star icon */}
+                              {entry.starFixture === team.fixtureId && (
+                                <Star className="absolute -top-1 -right-1 h-2.5 w-2.5 text-yellow-500 fill-current" />
+                              )}
+                            </div>
                           </div>
-                          {entry.starTeam === team.teamId && (
-                            <Star className="absolute -top-1 -right-1 h-2 w-2 text-yellow-500 fill-current" />
-                          )}
-                        </div>
-                      ))}
+                        );
+                      })}
                     </div>
                   </TableCell>
 

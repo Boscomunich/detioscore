@@ -18,6 +18,7 @@ import { Eye, EyeOff, Loader } from "lucide-react";
 import { Link, useNavigate } from "react-router";
 import { authClient } from "@/lib/auth-client";
 import { toast } from "sonner";
+import { CountrySelect } from "@/components/ui/country-select";
 
 let url: string;
 
@@ -35,7 +36,8 @@ const formSchema = z
     username: z.string().min(2, {
       message: "Username must be at least 2 characters.",
     }),
-    email: z.email({ message: "Invalid email address." }),
+    email: z.string().email({ message: "Invalid email address." }),
+    country: z.string().min(1, { message: "Please select a country." }),
     password: z.string().min(6, {
       message: "Password must be at least 6 characters.",
     }),
@@ -62,40 +64,41 @@ export function SignupForm() {
       email: "",
       password: "",
       confirmPassword: "",
+      country: "",
     },
   });
 
   async function signInWithGoogle() {
-    await authClient.signIn.social({
+    const data = await authClient.signIn.social({
       provider: "google",
       callbackURL: url,
     });
+    console.log("Google sign-in data:", data);
   }
 
-  // 2. Define a submit handler.
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    const { data, error } = await authClient.signUp.email(
-      {
-        email: values.email, // user email address
-        password: values.password, // user password -> min 8 characters by default
-        name: values.username, // user display name
-        callbackURL: "/", // A URL to redirect to after the user verifies their email (optional)
+    const signUpData = {
+      email: values.email,
+      password: values.password,
+      name: values.username,
+      country: values.country,
+      callbackURL: "/",
+    } as any;
+    const { data, error } = await authClient.signUp.email(signUpData, {
+      onRequest: () => setIsLoading(true),
+      onSuccess: () => {
+        setIsLoading(false);
+        toast.success("Signup successful!");
+        setTimeout(() => {
+          navigate("/signin");
+        }, 2000);
       },
-      {
-        onRequest: () => setIsLoading(true),
-        onSuccess: () => {
-          setIsLoading(false);
-          toast.success("Signup successful!");
-          setTimeout(() => {
-            navigate("/signin");
-          }, 2000);
-        },
-        onError: (ctx) => {
-          setIsLoading(false);
-          toast.error(ctx.error.message);
-        },
-      }
-    );
+      onError: (ctx) => {
+        setIsLoading(false);
+        toast.error(ctx.error.message);
+      },
+    });
+
     console.log("data", data, "error", error);
   }
 
@@ -103,7 +106,7 @@ export function SignupForm() {
     <div className="max-w-sm px-4 border rounded-sm my-2 w-full pb-6 mx-auto mb-24">
       <Link
         to=""
-        className=" text-4xl font-bold flex justify-center gap-2 items-center my-6"
+        className="text-4xl font-bold flex justify-center gap-2 items-center my-6"
       >
         <img src="/assets/logo.png" alt="Logo" className="size-12" />
         <div>
@@ -113,8 +116,10 @@ export function SignupForm() {
           <p className="text-[14px]">Your game Your score.</p>
         </div>
       </Link>
+
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+          {/* Username Field */}
           <FormField
             control={form.control}
             name="username"
@@ -132,12 +137,13 @@ export function SignupForm() {
             )}
           />
 
+          {/* Email Field */}
           <FormField
             control={form.control}
             name="email"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>email</FormLabel>
+                <FormLabel>Email</FormLabel>
                 <FormControl>
                   <Input placeholder="Email" {...field} />
                 </FormControl>
@@ -146,6 +152,26 @@ export function SignupForm() {
             )}
           />
 
+          {/* 👇 Country Select Field (below email) */}
+          <FormField
+            control={form.control}
+            name="country"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Country</FormLabel>
+                <FormControl>
+                  <CountrySelect
+                    value={field.value}
+                    onValueChange={field.onChange}
+                    placeholder="Select your country"
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          {/* Password Field */}
           <FormField
             control={form.control}
             name="password"
@@ -156,13 +182,10 @@ export function SignupForm() {
                   <div className="relative">
                     <Input
                       {...field}
-                      value={field.value ?? ""}
-                      onChange={(e) => field.onChange(e)}
                       type={seePassword ? "text" : "password"}
                       placeholder="Enter your password"
                       className="h-11 pr-10"
                     />
-
                     <button
                       type="button"
                       onClick={() => setSeePassword(!seePassword)}
@@ -182,6 +205,7 @@ export function SignupForm() {
             )}
           />
 
+          {/* Confirm Password Field */}
           <FormField
             control={form.control}
             name="confirmPassword"
@@ -192,13 +216,10 @@ export function SignupForm() {
                   <div className="relative">
                     <Input
                       {...field}
-                      value={field.value ?? ""}
-                      onChange={(e) => field.onChange(e)}
                       type={seeConfirmPassword ? "text" : "password"}
                       placeholder="Confirm password"
                       className="h-11 pr-10"
                     />
-
                     <button
                       type="button"
                       onClick={() => setSeeConfirmPassword(!seeConfirmPassword)}
@@ -217,6 +238,8 @@ export function SignupForm() {
               </FormItem>
             )}
           />
+
+          {/* Submit Button */}
           <Button
             type="submit"
             className="w-full bg-lime-400 text-black text-xl font-semibold h-14"
@@ -232,6 +255,8 @@ export function SignupForm() {
           </Button>
         </form>
       </Form>
+
+      {/* Google Sign-In Section */}
       <div className="flex items-center my-4 gap-2">
         <hr className="flex-1 border-gray-300" />
         <p className="text-center text-sm text-gray-400 whitespace-nowrap">
@@ -239,6 +264,7 @@ export function SignupForm() {
         </p>
         <hr className="flex-1 border-gray-300" />
       </div>
+
       <Button
         className="w-full border bg-transparent flex items-center justify-center text-xl font-semibold h-14 text-foreground active:scale-105"
         onClick={() => signInWithGoogle()}
@@ -246,8 +272,10 @@ export function SignupForm() {
         <img src="/icons/google.png" alt="Google" className="w-7 h-7 mr-2" />
         Sign up with Google
       </Button>
+
+      {/* Footer */}
       <div className="mt-4 flex items-center flex-col justify-center gap-2">
-        <h1>Already have an account</h1>
+        <h1>Already have an account?</h1>
         <Link
           to="/signin"
           className="text-lime-500 hover:underline font-semibold"
