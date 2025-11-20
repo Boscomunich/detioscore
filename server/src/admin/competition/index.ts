@@ -11,19 +11,34 @@ export async function getCompetitionParticipant(
 ) {
   try {
     const { competitionId } = req.params;
-    const competition = await Competition.findById(competitionId).populate({
-      path: "participants.user",
-      model: User,
-      select: "username email role",
-    });
+
+    const competition = await Competition.findById(competitionId)
+      .populate({
+        path: "participants.user",
+        model: "User",
+        select: "username email role",
+      })
+      .populate({
+        path: "createdBy",
+        model: "User",
+        select: "username email role",
+      })
+      .populate({
+        path: "winner",
+        model: "User",
+        select: "username email role",
+      });
 
     if (!competition) {
       return res.status(404).json({ message: "Competition not found" });
     }
 
-    // ✅ For each participant, fetch their TeamSelection in parallel
+    // Fetch TeamSelection for participants, safely handling null users
     const participantsWithTeams = await Promise.all(
       competition.participants.map(async (participant: any) => {
+        // Skip participants whose user was deleted
+        if (!participant.user) return null;
+
         const teamData = await TeamSelection.findOne({
           competition: competitionId,
           user: participant.user._id,
@@ -38,9 +53,12 @@ export async function getCompetitionParticipant(
       })
     );
 
+    // Filter out null participants
+    const filteredParticipants = participantsWithTeams.filter(Boolean);
+
     return res.status(200).json({
       competition,
-      participants: participantsWithTeams,
+      participants: filteredParticipants,
     });
   } catch (error) {
     next(error);
@@ -224,6 +242,26 @@ export async function validateWinner(
     });
   } catch (error) {
     console.error("Error validating winner:", error);
+    next(error);
+  }
+}
+
+export async function deactivateCompetition(
+  req: Request,
+  res: Response,
+  next: NextFunction
+) {
+  const { competitionId } = req.body;
+  try {
+    const competition = await Competition.findById(competitionId);
+    if (!competition) throw new AppError("Competition not found.", 404);
+    competition.isActive = false;
+    await competition.save();
+
+    return res.status(200).json({
+      message: "Competition deactivated successfully.",
+    });
+  } catch (error) {
     next(error);
   }
 }

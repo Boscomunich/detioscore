@@ -17,6 +17,14 @@ import {
 } from "@/components/ui/table";
 import { useNavigate } from "react-router";
 
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from "@/components/ui/select";
+
 interface UsersResponse {
   users: User[];
   pagination: {
@@ -30,22 +38,28 @@ interface UsersResponse {
 
 export default function AllUsers() {
   const [page, setPage] = useState(1);
+
+  // Sorting state
+  const [sortBy, setSortBy] = useState("createdAt");
+  const [sortOrder, setSortOrder] = useState("desc");
+
   const navigate = useNavigate();
 
   const { data, isLoading, isFetching, isError, refetch } =
     useQuery<UsersResponse>({
-      queryKey: ["users", page],
+      queryKey: ["users", page, sortBy, sortOrder],
       queryFn: async () => {
-        const res = await authApiClient.get(`/admin?page=${page}`);
+        const res = await authApiClient.get(
+          `/admin?page=${page}&sortBy=${sortBy}&sortOrder=${sortOrder}`
+        );
         return res.data as UsersResponse;
       },
-      placeholderData: (prev) => prev, // keep previous data during pagination
+      placeholderData: (prev) => prev,
     });
 
   const users = data?.users ?? [];
   const pagination = data?.pagination;
 
-  // Generate a limited list of page numbers (for large page counts)
   const getPageNumbers = () => {
     if (!pagination) return [];
     const totalPages = pagination.totalPages;
@@ -54,15 +68,14 @@ export default function AllUsers() {
 
     let start = Math.max(1, currentPage - Math.floor(visiblePages / 2));
     let end = start + visiblePages - 1;
+
     if (end > totalPages) {
       end = totalPages;
       start = Math.max(1, end - visiblePages + 1);
     }
 
     const pages = [];
-    for (let i = start; i <= end; i++) {
-      pages.push(i);
-    }
+    for (let i = start; i <= end; i++) pages.push(i);
     return pages;
   };
 
@@ -77,6 +90,43 @@ export default function AllUsers() {
           <p className="mt-2 text-sm text-muted-foreground">
             Manage user accounts and permissions
           </p>
+        </div>
+      </div>
+
+      {/* Sorting Controls */}
+      <div className="flex items-center gap-6">
+        {/* Sort Field */}
+        <div className="flex flex-col gap-1">
+          <label className="text-sm text-muted-foreground">Sort By</label>
+          <Select value={sortBy} onValueChange={setSortBy}>
+            <SelectTrigger className="w-[200px]">
+              <SelectValue placeholder="Sort by" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="createdAt">Date Joined</SelectItem>
+              <SelectItem value="username">Username</SelectItem>
+              <SelectItem value="email">Email</SelectItem>
+              <SelectItem value="role">Role</SelectItem>
+              <SelectItem value="country">Country</SelectItem>
+              <SelectItem value="lastLogin">Last Login</SelectItem>
+              <SelectItem value="banned">Banned</SelectItem>
+              <SelectItem value="suspended">Suspended</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        {/* Sort Order */}
+        <div className="flex flex-col gap-1">
+          <label className="text-sm text-muted-foreground">Order</label>
+          <Select value={sortOrder} onValueChange={setSortOrder}>
+            <SelectTrigger className="w-[200px]">
+              <SelectValue placeholder="Order" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="asc">Ascending</SelectItem>
+              <SelectItem value="desc">Descending</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
       </div>
 
@@ -162,7 +212,6 @@ export default function AllUsers() {
                 {pagination?.totalUsers} users
               </p>
 
-              {/**page buttons */}
               <div className="flex items-center gap-2">
                 <Button
                   variant="outline"

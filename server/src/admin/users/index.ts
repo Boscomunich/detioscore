@@ -1,5 +1,5 @@
 import { NextFunction, Request, Response } from "express";
-import User from "../../models/user";
+import User, { IUser } from "../../models/user";
 import AppError from "../../middleware/error";
 
 export async function getUsers(
@@ -10,10 +10,45 @@ export async function getUsers(
   const page = parseInt(req.query.page as string) || 1;
   const limit = 50;
   const skip = (page - 1) * limit;
+
   try {
+    const filter: any = {};
+
+    if (req.query.username) {
+      filter.username = {
+        $regex: new RegExp(req.query.username as string, "i"),
+      };
+    }
+
+    if (req.query.email) {
+      filter.email = { $regex: new RegExp(req.query.email as string, "i") };
+    }
+
+    if (req.query.role) {
+      filter.role = req.query.role;
+    }
+
+    if (req.query.country) {
+      filter.country = req.query.country;
+    }
+
+    if (req.query.banned) {
+      filter.banned = req.query.banned === "true";
+    }
+
+    if (req.query.suspended) {
+      filter.suspended = req.query.suspended === "true";
+    }
+
+    const sortField = (req.query.sortBy as string) || "createdAt";
+    const sortOrder = req.query.sortOrder === "asc" ? 1 : -1;
+
     const [users, totalUsers] = await Promise.all([
-      User.find().skip(skip).limit(limit).sort({ createdAt: -1 }),
-      User.countDocuments(),
+      User.find(filter)
+        .skip(skip)
+        .limit(limit)
+        .sort({ [sortField]: sortOrder }),
+      User.countDocuments(filter),
     ]);
 
     const totalPages = Math.ceil(totalUsers / limit);
@@ -118,6 +153,52 @@ export async function unbanUser(
     if (!user) throw new AppError("User not found", 404);
 
     res.status(200).json({ message: "User unbanned successfully", user });
+  } catch (error) {
+    next(error);
+  }
+}
+
+export async function deleteUser(
+  req: Request,
+  res: Response,
+  next: NextFunction
+) {
+  try {
+    const { id } = req.params;
+    const user = await User.findByIdAndDelete(id);
+    if (!user) throw new AppError("User not found", 404);
+
+    res.status(200).json({ message: "User banned successfully", user });
+  } catch (error) {
+    next(error);
+  }
+}
+
+export async function changeUserRole(
+  req: Request,
+  res: Response,
+  next: NextFunction
+) {
+  try {
+    const { id } = req.params;
+    const role = req.body.role as IUser["role"];
+
+    if (!role) {
+      throw new AppError("Role is required", 400);
+    }
+
+    const user = await User.findById(id);
+    if (!user) {
+      throw new AppError("User not found", 404);
+    }
+
+    user.role = role;
+    await user.save();
+
+    res.status(200).json({
+      message: "User role updated successfully",
+      user,
+    });
   } catch (error) {
     next(error);
   }

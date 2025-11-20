@@ -15,4 +15,10 @@ if (
 export const authClient = createAuthClient({
   baseURL: url,
   plugins: [jwtClient()],
+  fetchOptions: {
+    auth: {
+      type: "Bearer",
+      token: () => localStorage.getItem("ditioscore_bearer_token") || "",
+    },
+  },
 });

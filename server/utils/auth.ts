@@ -1,6 +1,6 @@
-import { betterAuth } from "better-auth";
+import { betterAuth, BetterAuthPlugin } from "better-auth";
 import { mongodbAdapter } from "better-auth/adapters/mongodb";
-import { admin, createAuthMiddleware, jwt } from "better-auth/plugins";
+import { admin, bearer, createAuthMiddleware, jwt } from "better-auth/plugins";
 import mongoose from "../src/database";
 import { emailEmitter } from "../src/event-emitter/email-emitter";
 import { eventEmitter } from "../src/event-emitter";
@@ -41,20 +41,7 @@ export const createAuth = () => {
       // after: updateUser(async (ctx) => {})
     },
 
-    plugins: [
-      admin({ adminRoles: ["ADMIN", "SUPER_ADMIN"] }),
-      jwt({
-        jwt: {
-          definePayload: ({ user }) => {
-            return {
-              id: user.id,
-              email: user.email,
-              role: user.role,
-            };
-          },
-        },
-      }),
-    ],
+    plugins: [bearer() as BetterAuthPlugin],
     user: {
       modelName: "user",
       fields: { name: "username" },

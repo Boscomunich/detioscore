@@ -1,7 +1,7 @@
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { authApiClient } from "@/api-config";
-import { Loader2 } from "lucide-react";
+import { Loader2, UserCheck } from "lucide-react";
 
 import type { Transaction } from "@/types/transaction";
 import { TransactionTable } from "../components/transaction-table";
@@ -12,6 +12,11 @@ import { Badge } from "@/components/ui/badge";
 import { ArrowLeft } from "lucide-react";
 import { useLocation, useParams } from "react-router";
 import type { User } from "@/types/user";
+import { toast } from "sonner";
+import { BanDialog } from "./ban-user-popup";
+import { SuspendDialog } from "./suspend-user-popup";
+import { DeleteUserDialog } from "./delete-user";
+import { RoleDialog } from "./user-role";
 
 interface TransactionsResponse {
   transactions: Transaction[];
@@ -29,25 +34,27 @@ export default function UserDetailView() {
   const { state } = useLocation();
   const user = state as User;
 
-  // const handleBan = () => {
-  //   console.log("[v0] Banning user:", userId);
-  //   // API call to ban user
-  // };
+  const mutation = useMutation({
+    mutationFn: async (data: any) => {
+      const res = await authApiClient.patch(`/admin/${user._id}/${data.route}`);
+      return res.data;
+    },
+    onSuccess: () => {
+      toast.success("action is successfully!");
+    },
+    onError: (error) => {
+      toast.error("action failed.");
+      console.error(error);
+    },
+  });
 
-  // const handleUnban = () => {
-  //   console.log("[v0] Unbanning user:", userId);
-  //   // API call to unban user
-  // };
+  const handleUnban = () => {
+    mutation.mutate({ route: "unban" });
+  };
 
-  // const handleSuspend = () => {
-  //   console.log("[v0] Suspending user:", userId);
-  //   // API call to suspend user
-  // };
-
-  // const handleUnsuspend = () => {
-  //   console.log("[v0] Unsuspending user:", userId);
-  //   // API call to unsuspend user
-  // };
+  const handleUnsuspend = () => {
+    mutation.mutate({ route: "unsuspend" });
+  };
 
   return (
     <div className="space-y-8">
@@ -68,12 +75,13 @@ export default function UserDetailView() {
       </div>
 
       {/* Action Buttons */}
-      {/* <Card className="p-6">
+      <Card className="p-6">
         <h2 className="text-lg font-semibold text-foreground mb-4">Actions</h2>
         <div className="flex flex-wrap gap-3">
           {user.banned ? (
             <Button
               onClick={handleUnban}
+              disabled={mutation.isPending}
               variant="outline"
               className="gap-2 bg-transparent"
             >
@@ -81,15 +89,13 @@ export default function UserDetailView() {
               Unban User
             </Button>
           ) : (
-            <Button onClick={handleBan} variant="destructive" className="gap-2">
-              <Ban className="h-4 w-4" />
-              Ban User
-            </Button>
+            <BanDialog user={user} />
           )}
 
           {user.suspended ? (
             <Button
               onClick={handleUnsuspend}
+              disabled={mutation.isPending}
               variant="outline"
               className="gap-2 bg-transparent"
             >
@@ -97,17 +103,12 @@ export default function UserDetailView() {
               Unsuspend User
             </Button>
           ) : (
-            <Button
-              onClick={handleSuspend}
-              variant="outline"
-              className="gap-2 bg-transparent"
-            >
-              <ShieldOff className="h-4 w-4" />
-              Suspend User
-            </Button>
+            <SuspendDialog user={user} />
           )}
+          <DeleteUserDialog user={user} />
+          <RoleDialog user={user} />
         </div>
-      </Card> */}
+      </Card>
 
       {/* User Information */}
       <div className="grid gap-6 md:grid-cols-2">

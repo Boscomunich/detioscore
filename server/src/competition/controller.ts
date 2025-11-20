@@ -1,10 +1,10 @@
 import { NextFunction, Response } from "express";
 import Competition from "../models/competition";
 import { AuthenticatedRequest } from "../middleware/session";
-import { logger } from "better-auth";
 import AppError from "../middleware/error";
 import mongoose from "mongoose";
 import TeamSelection from "../models/teams";
+import User from "../models/user";
 
 export async function fetchAllActiveCompetition(
   req: AuthenticatedRequest,
@@ -41,6 +41,41 @@ export async function fetchAllActiveCompetition(
   }
 }
 
+export async function fetchAllInActiveCompetition(
+  req: AuthenticatedRequest,
+  res: Response,
+  next: NextFunction
+) {
+  const page = parseInt(req.query.page as string) || 1;
+  const limit = parseInt(req.query.limit as string) || 20;
+  const skip = (page - 1) * limit;
+
+  try {
+    const [competitions, totalCompetitions] = await Promise.all([
+      Competition.find({ isActive: false })
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit),
+      Competition.countDocuments({ isActive: false }),
+    ]);
+
+    const totalPages = Math.ceil(totalCompetitions / limit);
+
+    res.status(200).json({
+      competitions,
+      pagination: {
+        totalCompetitions,
+        totalPages,
+        currentPage: page,
+        hasNextPage: page < totalPages,
+        hasPrevPage: page > 1,
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
 export async function fetchCompetitionWithTeamsAndUserData(
   req: AuthenticatedRequest,
   res: Response,
@@ -49,113 +84,59 @@ export async function fetchCompetitionWithTeamsAndUserData(
   const { competitionId } = req.params;
 
   try {
-    const [competition] = await Competition.aggregate([
-      { $match: { _id: new mongoose.Types.ObjectId(competitionId) } },
+    const competition = await Competition.findById(competitionId)
+      .populate({
+        path: "createdBy",
+        model: "User",
+        select: "_id username email role",
+      })
+      .populate({
+        path: "winner",
+        model: "User",
+        select: "_id username email role",
+      })
+      .populate({
+        path: "participants.user",
+        model: "User",
+        select: "_id username email role",
+      })
+      .lean(); // optional: returns plain JS objects
 
-      // Lookup creator with projection
-      {
-        $lookup: {
-          from: "user",
-          let: { creatorId: "$createdBy" },
-          pipeline: [
-            { $match: { $expr: { $eq: ["$_id", "$$creatorId"] } } },
-            { $project: { _id: 1, username: 1, email: 1 } },
-          ],
-          as: "createdBy",
-        },
-      },
-      { $unwind: { path: "$createdBy", preserveNullAndEmptyArrays: true } },
+    if (!competition) {
+      return res.status(404).json({ message: "Competition not found" });
+    }
 
-      // Unwind participants
-      { $unwind: { path: "$participants", preserveNullAndEmptyArrays: true } },
+    // Fetch TeamSelection for each participant
+    const participantsWithTeams = await Promise.all(
+      (competition.participants || []).map(async (participant: any) => {
+        if (!participant.user) return null; // skip deleted users
 
-      // Lookup user for participant with projection
-      {
-        $lookup: {
-          from: "user",
-          let: { userId: "$participants.user" },
-          pipeline: [
-            { $match: { $expr: { $eq: ["$_id", "$$userId"] } } },
-            { $project: { _id: 1, username: 1, email: 1 } },
-          ],
-          as: "participantUser",
-        },
-      },
-      {
-        $unwind: { path: "$participantUser", preserveNullAndEmptyArrays: true },
-      },
+        const teamData = await TeamSelection.findOne({
+          competition: competition._id,
+          user: participant.user._id,
+        })
+          .select(
+            "_id stakedAmount teams starTeam teamPoints totalPoints rank stepsVerified proofs createdAt updatedAt"
+          )
+          .lean();
 
-      // Lookup teamSelection (ONE object, not array)
-      {
-        $lookup: {
-          from: "teamselections",
-          let: { compId: "$_id", userId: "$participants.user" },
-          pipeline: [
-            {
-              $match: {
-                $expr: {
-                  $and: [
-                    { $eq: ["$competition", "$$compId"] },
-                    { $eq: ["$user", "$$userId"] },
-                  ],
-                },
-              },
-            },
-            {
-              $project: {
-                _id: 1,
-                stakedAmount: 1,
-                teams: 1,
-                starTeam: 1,
-                teamPoints: 1,
-                totalPoints: 1,
-                rank: 1,
-                stepsVerified: 1,
-                proofs: 1,
-                createdAt: 1,
-                updatedAt: 1,
-              },
-            },
-          ],
-          as: "teamSelection",
-        },
-      },
-      { $unwind: { path: "$teamSelection", preserveNullAndEmptyArrays: true } },
+        return {
+          _id: participant._id,
+          status: participant.status,
+          joinedAt: participant.joinedAt,
+          user: participant.user,
+          team: teamData || null,
+        };
+      })
+    );
 
-      // Rebuild participants array
-      {
-        $group: {
-          _id: "$_id",
-          doc: { $first: "$$ROOT" },
-          participants: {
-            $push: {
-              _id: "$participants._id",
-              status: "$participants.status",
-              joinedAt: "$participants.joinedAt",
-              user: {
-                _id: "$participantUser._id",
-                username: "$participantUser.username",
-                email: "$participantUser.email",
-              },
-              team: "$teamSelection", // 👈 one object, not array
-            },
-          },
-        },
-      },
+    // Filter out participants with deleted users
+    const filteredParticipants = participantsWithTeams.filter(Boolean);
 
-      // Merge back with root doc
-      {
-        $replaceRoot: {
-          newRoot: {
-            $mergeObjects: ["$doc", { participants: "$participants" }],
-          },
-        },
-      },
-    ]);
-
-    if (!competition) throw new AppError("Competition not found", 404);
-
-    res.status(200).json(competition);
+    res.status(200).json({
+      ...competition,
+      participants: filteredParticipants,
+    });
   } catch (error) {
     console.error("fetchCompetitionWithTeamsAndUserData error:", error);
     next(new AppError("Failed to fetch competition details", 500));

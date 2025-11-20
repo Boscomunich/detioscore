@@ -1,4 +1,5 @@
 import mongoose, { Document, Types } from "mongoose";
+import { cascadeDeletePlugin } from "./cascade-delete";
 
 export interface IUserIP {
   ip?: string | null;
@@ -11,7 +12,7 @@ export interface IUser {
   password?: string;
   googleId?: string;
   emailVerified: boolean;
-  role: "USER" | "ADMIN" | "SUPER_ADMIN";
+  role: "user" | "admin" | "super_admin";
   country: string;
   ipAddresses: IUserIP[];
   lastLogin?: Date;
@@ -36,8 +37,8 @@ const UserSchema = new mongoose.Schema<IUserDocument>(
     emailVerified: { type: Boolean, default: false },
     role: {
       type: String,
-      enum: ["USER", "ADMIN", "SUPER_ADMIN"],
-      default: "USER",
+      enum: ["user", "admin", "super_admin"],
+      default: "user",
     },
     country: { type: String, required: true },
     ipAddresses: {
@@ -59,6 +60,20 @@ const UserSchema = new mongoose.Schema<IUserDocument>(
   },
   { timestamps: true, collection: "user" }
 );
+
+UserSchema.plugin(cascadeDeletePlugin, {
+  related: [
+    { model: "Achievement", field: "user", importPath: "./Achievement" },
+    { model: "Wallet", field: "user", importPath: "./Wallet" },
+    { model: "Transaction", field: "user", importPath: "./Transaction" },
+    { model: "TeamSelection", field: "user", importPath: "./TeamSelection" },
+    { model: "Competition", field: "createdBy", importPath: "./Competition" },
+    { model: "Account", field: "userId", importPath: "./Account" },
+    { model: "Notification", field: "user", importPath: "./Notification" },
+    { model: "Rank", field: "user", importPath: "./Rank" },
+    { model: "Session", field: "userId", importPath: "./Session" },
+  ],
+});
 
 const User = mongoose.model<IUserDocument>("User", UserSchema);
 

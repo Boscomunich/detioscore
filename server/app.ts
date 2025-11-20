@@ -15,10 +15,6 @@ import { topScoreRouter } from "./src/top-score/route";
 import { manGoSetRouter } from "./src/mango-set/route";
 import { competitionRouter } from "./src/competition/route";
 import globalErrorHandler from "./src/middleware/error-handler";
-import {
-  adminSessionMiddleware,
-  sessionMiddleware,
-} from "./src/middleware/session";
 import { createAuth } from "./utils/auth";
 import { transactionRouter } from "./src/transaction/route";
 import { notificationRouter } from "./src/notification/route";
@@ -30,6 +26,10 @@ import {
   scheduleDailyFixtureUpdate,
 } from "./src/cron-jobs";
 import { rankingRouter } from "./src/ranks/route";
+import {
+  adminTokenAuthMiddleware,
+  tokenAuthMiddleware,
+} from "./src/middleware/auth";
 
 const port = parseInt(process.env.PORT || "6000", 10);
 const allowedOrigins = [
@@ -97,14 +97,14 @@ async function startServer() {
   app.use(express.json());
 
   app.use("/livescore", livescoreRouter);
-  app.use("/top-score", sessionMiddleware(auth), topScoreRouter);
-  app.use("/man-go-set", sessionMiddleware(auth), manGoSetRouter);
-  app.use("/competition", sessionMiddleware(auth), competitionRouter);
-  app.use("/transaction", sessionMiddleware(auth), transactionRouter);
-  app.use("/notification", sessionMiddleware(auth), notificationRouter);
-  app.use("/user", sessionMiddleware(auth), userRouter);
-  app.use("/admin", adminSessionMiddleware(auth), adminRouter);
-  app.use("/rankings", sessionMiddleware(auth), rankingRouter);
+  app.use("/top-score", tokenAuthMiddleware(auth), topScoreRouter);
+  app.use("/man-go-set", tokenAuthMiddleware(auth), manGoSetRouter);
+  app.use("/competition", tokenAuthMiddleware(auth), competitionRouter);
+  app.use("/transaction", tokenAuthMiddleware(auth), transactionRouter);
+  app.use("/notification", tokenAuthMiddleware(auth), notificationRouter);
+  app.use("/user", tokenAuthMiddleware(auth), userRouter);
+  app.use("/admin", adminTokenAuthMiddleware(auth), adminRouter);
+  app.use("/rankings", tokenAuthMiddleware(auth), rankingRouter);
 
   app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(specs));
 

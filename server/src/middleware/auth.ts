@@ -1,71 +1,94 @@
-import { NextFunction, Request, Response } from "express";
-import { jwtVerify, createRemoteJWKSet, JWTPayload } from "jose";
-import dotenv from "dotenv";
+import { Request, Response, NextFunction } from "express";
+import { IUser } from "../models/user";
 
-dotenv.config();
-
-// Extend Express Request
-interface AuthenticatedRequest extends Request {
-  user?: JWTPayload;
+export interface AuthenticatedRequest extends Request {
+  user?: IUser;
+  jwtToken?: string;
 }
 
-// Create JWKS client
-const JWKS = createRemoteJWKSet(
-  new URL(`${process.env.BETTER_AUTH_URL}/api/auth/jwks`)
-);
+function extractBearerToken(req: Request): string | null {
+  const authHeader = req.headers["authorization"];
+  if (!authHeader) return null;
+  const [type, token] = authHeader.split(" ");
+  if (type !== "Bearer" || !token) return null;
+  return token;
+}
 
-export async function verifyUser(
-  req: AuthenticatedRequest,
-  res: Response,
-  next: NextFunction
-) {
-  try {
-    // Support both Authorization header and cookie
-    const token = req.cookies?.["better-auth.session_data"];
-    if (!token) {
-      return res.status(401).json({ error: "No token provided" });
+function buildFetchHeaders(req: Request): Headers {
+  const headers = new Headers();
+  for (const [key, value] of Object.entries(req.headers)) {
+    if (!value) continue;
+    if (Array.isArray(value)) {
+      value.forEach((v) => headers.append(key, v));
+    } else {
+      headers.append(key, value as string);
     }
-
-    const { payload } = await jwtVerify(token, JWKS, {
-      issuer: process.env.BETTER_AUTH_URL!,
-      audience: process.env.BETTER_AUTH_URL!,
-    });
-
-    req.user = payload;
-    next();
-  } catch (err) {
-    console.error("JWT verification failed:", err);
-    return res.status(401).json({ error: "Invalid or expired token" });
   }
+  return headers;
 }
 
-export async function verifyAdmin(
-  req: AuthenticatedRequest,
-  res: Response,
-  next: NextFunction
-) {
-  try {
-    // Support both Authorization header and cookie
-    const token = req.cookies?.["better-auth.session_data"];
+export const tokenAuthMiddleware = (auth: any) => {
+  return async (
+    req: AuthenticatedRequest,
+    res: Response,
+    next: NextFunction
+  ) => {
+    try {
+      const token = extractBearerToken(req);
+      if (!token) {
+        return res.status(401).json({ error: "Missing Bearer token" });
+      }
 
-    if (!token) {
-      return res.status(401).json({ error: "No token provided" });
+      req.jwtToken = token;
+
+      const fetchHeaders = buildFetchHeaders(req);
+
+      const session = await auth.api.getSession({ headers: fetchHeaders });
+      if (!session) {
+        return res.status(401).json({ error: "Invalid or expired token" });
+      }
+
+      req.user = session.user;
+      next();
+    } catch (err) {
+      console.error("Token validation failed:", err);
+      return res.status(401).json({ error: "Unauthorized" });
     }
+  };
+};
 
-    const { payload } = await jwtVerify(token, JWKS, {
-      issuer: process.env.BETTER_AUTH_URL!,
-      audience: process.env.BETTER_AUTH_URL!,
-    });
+export const adminTokenAuthMiddleware = (auth: any) => {
+  return async (
+    req: AuthenticatedRequest,
+    res: Response,
+    next: NextFunction
+  ) => {
+    try {
+      const token = extractBearerToken(req);
+      if (!token) {
+        return res.status(401).json({ error: "Missing Bearer token" });
+      }
 
-    req.user = payload as JWTPayload & { role?: string };
+      req.jwtToken = token;
 
-    if (req.user.role !== "ADMIN" && req.user.role !== "SUPER_ADMIN") {
-      return res.status(403).json({ error: "Forbidden: Admins only" });
+      const fetchHeaders = buildFetchHeaders(req);
+
+      const session = await auth.api.getSession({ headers: fetchHeaders });
+      if (!session) {
+        return res.status(401).json({ error: "Invalid or expired token" });
+      }
+
+      if (session.user.role !== "admin") {
+        return res
+          .status(403)
+          .json({ error: "Forbidden: Admin access required" });
+      }
+
+      req.user = session.user;
+      next();
+    } catch (err) {
+      console.error("Admin token validation failed:", err);
+      return res.status(401).json({ error: "Unauthorized" });
     }
-
-    next();
-  } catch (err) {
-    console.error("JWT verification failed:", err);
-    return res.status(401).json({ error: "Invalid or expired token" });
-  }
-}
+  };
+};

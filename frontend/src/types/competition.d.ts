@@ -169,4 +169,30 @@ export interface TeamRankingsTableProps {
   className?: string;
 }
 
+export interface AdminCompetition {
+  _id: string;
+  name: string;
+  invitationCode: string;
+  type: "TopScore" | "ManGoSet" | "League";
+  entryFee: number;
+  prizePool: number;
+  participantCap: number;
+  requiredTeams: number;
+  participants: Participants[];
+  rules: Rule[];
+  minParticipants: number;
+  isActive: boolean;
+  isPublic: boolean;
+  createdAt: string;
+  createdBy: User;
+  leagueConfig?: {
+    durationDays: number;
+    matchRequirement: number;
+  };
+  startDate: string;
+  endDate: string;
+  winner: User;
+  hostContribution: number;
+}
+
 export {};

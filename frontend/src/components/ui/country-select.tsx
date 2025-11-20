@@ -37,7 +37,7 @@ export const CountrySelect = React.forwardRef<
   const selectedCountry = COUNTRIES.find((c) => c.label === value);
 
   const handleSelect = (countryName: string) => {
-    onValueChange?.(countryName); // ✅ send full name to form
+    onValueChange?.(countryName);
     setOpen(false);
   };
 

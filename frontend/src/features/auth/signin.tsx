@@ -59,16 +59,10 @@ export function SigninForm() {
       },
       {
         onRequest: () => setIsLoading(true),
-        onSuccess: async () => {
+        onSuccess: async (ctx) => {
+          const authToken = ctx.response.headers.get("set-auth-token");
+          localStorage.setItem("ditioscore_bearer_token", authToken!);
           setIsLoading(false);
-          // const { data, error } = await authClient.token();
-          // if (error) {
-          //   // handle error
-          // }
-          // if (data) {
-          //   const jwtToken = data.token;
-          //   console.log(jwtToken);
-          // }
           toast.success(
             "Welcome to Ditioscore! you will be redirected back to the previous page"
           );

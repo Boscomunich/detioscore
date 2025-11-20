@@ -15,11 +15,11 @@ import {
   Target,
   Loader2,
 } from "lucide-react";
-import type { Competition, Participant } from "@/types/competition";
+import type { AdminCompetition, Participant } from "@/types/competition";
 import ParticipantSection from "./participant-section";
 
 interface CompetitonDetails {
-  competition: Competition;
+  competition: AdminCompetition;
   participants: Participant[];
 }
 
@@ -196,14 +196,14 @@ export default function CompetitionDetails() {
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Created By</span>
                 <span className="font-mono text-sm">
-                  {competition.createdBy}
+                  {competition.createdBy.username}
                 </span>
               </div>
               <Separator />
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Winner</span>
                 <span className="font-semibold">
-                  {competition.winner || "Not determined"}
+                  {competition?.winner?.username || "Not determined"}
                 </span>
               </div>
             </div>

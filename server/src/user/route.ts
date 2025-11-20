@@ -1,9 +1,8 @@
 import express from "express";
-import { fetchUser, updateUsername } from "./controller";
+import { getWallet } from "./controller";
 
 const router = express.Router();
 
-router.post("/get-user", fetchUser);
-router.get("/update-username", updateUsername);
+router.get("/wallet", getWallet);
 
 export const userRouter = router;

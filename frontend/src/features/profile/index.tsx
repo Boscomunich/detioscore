@@ -15,6 +15,8 @@ import ActiveCompetition from "./competition/active-competition";
 import InActiveCompetition from "./competition/inactive-competition";
 import { ChangePasswordDialog } from "./change-password";
 import UserRank from "./user-rank";
+import { useQuery } from "@tanstack/react-query";
+import { authApiClient } from "@/api-config";
 
 export default function Profile() {
   const { data: session } = authClient.useSession();
@@ -29,12 +31,20 @@ export default function Profile() {
     }
   }
 
+  const { data } = useQuery({
+    queryKey: ["wallet"],
+    queryFn: async () => {
+      const res = await authApiClient.get(`/user/wallet/`);
+      return res.data;
+    },
+  });
+
   return (
     <div className="h-full w-[98%] flex flex-col justify-center items-center max-w-3xl px-4 rounded-sm my-2 pb-6 mx-auto gap-4">
       <div className="w-full max-w-2xl flex items-center justify-between h-20">
         <div>
           <p className="text-xs font-extralight">Total balance</p>
-          <h1 className="text-lg font-bold">0 DC</h1>
+          <h1 className="text-lg font-bold">{data.wallet.balance} DC</h1>
         </div>
         <Link to="/notifications">
           <Bell className="size-8" />

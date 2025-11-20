@@ -28,12 +28,12 @@ import AdminLayout from "./features/admin/layout";
 import { Admin } from "./features/admin";
 import AllUsers from "./features/admin/users";
 import PendingTransactions from "./features/admin/transactions";
-import ActiveCompetitions from "./features/admin/competition";
 import UserDetailView from "./features/admin/users/details";
 import { TransactionDetailView } from "./features/admin/transactions/details";
 import CompetitionDetails from "./features/admin/competition/details";
 import { CompleteProfileForm } from "./features/auth/complete-profile";
 import AuthLayout from "./features/auth-layout";
+import Competitions from "./features/admin/competition";
 
 function ScrollToTop() {
   const { pathname } = useLocation();
@@ -108,7 +108,7 @@ function App() {
             path="transactions/:txnId"
             element={<TransactionDetailView />}
           />
-          <Route path="competition" element={<ActiveCompetitions />} />
+          <Route path="competition" element={<Competitions />} />
           <Route path="competition/:compId" element={<CompetitionDetails />} />
         </Route>
       </Routes>

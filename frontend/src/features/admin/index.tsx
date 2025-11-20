@@ -1,74 +1,106 @@
-// import { cn } from "@/lib/utils";
-
-// import { Card } from "@/components/ui/card";
-// import {
-//   ArrowUpRight,
-//   ArrowDownRight,
-//   DollarSign,
-//   Users,
-//   Trophy,
-//   TrendingUp,
-// } from "lucide-react";
-
-// const stats = [
-//   {
-//     name: "Total Revenue",
-//     value: "$45,231.89",
-//     change: "+20.1%",
-//     trend: "up",
-//     icon: DollarSign,
-//   },
-//   {
-//     name: "Active Users",
-//     value: "2,350",
-//     change: "+15.3%",
-//     trend: "up",
-//     icon: Users,
-//   },
-//   {
-//     name: "Pending Transactions",
-//     value: "127",
-//     change: "-5.2%",
-//     trend: "down",
-//     icon: TrendingUp,
-//   },
-//   {
-//     name: "Active Competitions",
-//     value: "12",
-//     change: "+8.0%",
-//     trend: "up",
-//     icon: Trophy,
-//   },
-// ];
-
-// const recentActivity = [
-//   {
-//     id: 1,
-//     user: "john@example.com",
-//     action: "New transaction",
-//     time: "2 minutes ago",
-//   },
-//   {
-//     id: 2,
-//     user: "sarah@example.com",
-//     action: "Joined competition",
-//     time: "15 minutes ago",
-//   },
-//   {
-//     id: 3,
-//     user: "mike@example.com",
-//     action: "Account suspended",
-//     time: "1 hour ago",
-//   },
-//   {
-//     id: 4,
-//     user: "emma@example.com",
-//     action: "Transaction completed",
-//     time: "2 hours ago",
-//   },
-// ];
+import { cn } from "@/lib/utils";
+import { authApiClient } from "@/api-config";
+import { useQuery } from "@tanstack/react-query";
+import { Card } from "@/components/ui/card";
+import {
+  ArrowUpRight,
+  ArrowDownRight,
+  DollarSign,
+  Users,
+  TrendingUp,
+} from "lucide-react";
 
 export function Admin() {
+  async function fetchData() {
+    const response = await authApiClient.get(`/admin/metric`);
+    return response.data;
+  }
+
+  const { data } = useQuery({
+    queryKey: ["admin-metrics"],
+    queryFn: fetchData,
+  });
+
+  console.log(data);
+
+  if (!data) {
+    return <p>Loading...</p>;
+  }
+
+  // Helper function to determine trend
+  const getTrend = (change: number | null) => {
+    if (change === null) return null;
+    return change >= 0 ? "up" : "down";
+  };
+
+  const stats = [
+    // Total stats
+    {
+      name: "Total Volume",
+      value: `$${data.totalVolume.toLocaleString()}`,
+      change: null,
+      trend: null,
+      icon: DollarSign,
+    },
+    {
+      name: "Total Users",
+      value: data.totalUsers.toLocaleString(),
+      change: null,
+      trend: null,
+      icon: Users,
+    },
+
+    // Daily stats
+    {
+      name: "Daily Volume",
+      value: `$${data.dailyVolume.toLocaleString()}`,
+      change: data.dailyChange !== null ? `${data.dailyChange}%` : "—",
+      trend: getTrend(data.dailyChange),
+      icon: TrendingUp,
+    },
+    {
+      name: "Daily New Users",
+      value: data.dailyNewUsers.toLocaleString(),
+      change: data.dailyUserChange !== null ? `${data.dailyUserChange}%` : "—",
+      trend: getTrend(data.dailyUserChange),
+      icon: Users,
+    },
+
+    // Weekly stats
+    {
+      name: "Weekly Volume",
+      value: `$${data.weeklyVolume.toLocaleString()}`,
+      change: data.weeklyChange !== null ? `${data.weeklyChange}%` : "—",
+      trend: getTrend(data.weeklyChange),
+      icon: TrendingUp,
+    },
+    {
+      name: "Weekly New Users",
+      value: data.weeklyNewUsers.toLocaleString(),
+      change:
+        data.weeklyUserChange !== null ? `${data.weeklyUserChange}%` : "—",
+      trend: getTrend(data.weeklyUserChange),
+      icon: Users,
+    },
+
+    // Monthly stats
+    {
+      name: "Monthly Volume",
+      value: `$${data.monthlyVolume.toLocaleString()}`,
+      change: data.monthlyChange !== null ? `${data.monthlyChange}%` : "—",
+      trend: getTrend(data.monthlyChange),
+      icon: TrendingUp,
+    },
+    {
+      name: "Monthly New Users",
+      value: data.monthlyNewUsers.toLocaleString(),
+      change:
+        data.monthlyUserChange !== null ? `${data.monthlyUserChange}%` : "—",
+      trend: getTrend(data.monthlyUserChange),
+      icon: Users,
+    },
+  ];
+
   return (
     <div className="space-y-8">
       <div>
@@ -81,26 +113,28 @@ export function Admin() {
       </div>
 
       {/* Stats Grid */}
-      {/* <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         {stats.map((stat) => (
           <Card key={stat.name} className="p-6">
             <div className="flex items-center justify-between">
               <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
                 <stat.icon className="h-5 w-5 text-primary" />
               </div>
-              <div
-                className={cn(
-                  "flex items-center gap-1 text-xs font-medium",
-                  stat.trend === "up" ? "text-chart-2" : "text-destructive"
-                )}
-              >
-                {stat.trend === "up" ? (
-                  <ArrowUpRight className="h-3 w-3" />
-                ) : (
-                  <ArrowDownRight className="h-3 w-3" />
-                )}
-                {stat.change}
-              </div>
+              {stat.change && (
+                <div
+                  className={cn(
+                    "flex items-center gap-1 text-xs font-medium",
+                    stat.trend === "up" ? "text-chart-2" : "text-destructive"
+                  )}
+                >
+                  {stat.trend === "up" ? (
+                    <ArrowUpRight className="h-3 w-3" />
+                  ) : stat.trend === "down" ? (
+                    <ArrowDownRight className="h-3 w-3" />
+                  ) : null}
+                  {stat.change}
+                </div>
+              )}
             </div>
             <div className="mt-4">
               <p className="text-sm font-medium text-muted-foreground">
@@ -112,34 +146,7 @@ export function Admin() {
             </div>
           </Card>
         ))}
-      </div> */}
-
-      {/* Recent Activity */}
-      {/* <Card className="p-6">
-        <h2 className="mb-4 text-lg font-semibold text-foreground">
-          Recent Activity
-        </h2>
-        <div className="space-y-4">
-          {recentActivity.map((activity) => (
-            <div
-              key={activity.id}
-              className="flex items-center justify-between border-b border-border pb-4 last:border-0 last:pb-0"
-            >
-              <div>
-                <p className="text-sm font-medium text-foreground">
-                  {activity.user}
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  {activity.action}
-                </p>
-              </div>
-              <span className="text-xs text-muted-foreground">
-                {activity.time}
-              </span>
-            </div>
-          ))}
-        </div>
-      </Card> */}
+      </div>
     </div>
   );
 }

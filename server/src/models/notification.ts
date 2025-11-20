@@ -18,8 +18,7 @@ export enum NotificationStatus {
 }
 
 export interface INotification extends Document {
-  recipient: Types.ObjectId;
-  sender?: Types.ObjectId;
+  user: Types.ObjectId;
   type: NotificationType;
   title: string;
   message: string;
@@ -31,8 +30,7 @@ export interface INotification extends Document {
 
 const notificationSchema = new Schema<INotification>(
   {
-    recipient: { type: Schema.Types.ObjectId, ref: "User", required: true },
-    sender: { type: Schema.Types.ObjectId, ref: "User" },
+    user: { type: Schema.Types.ObjectId, ref: "User", required: true },
     type: {
       type: String,
       enum: Object.values(NotificationType),

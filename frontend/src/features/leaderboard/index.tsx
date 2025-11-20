@@ -63,8 +63,6 @@ export default function RankTables() {
           />
         ))}
       </div>
-
-      {/* Table Content */}
       <GlobalRank type={selected} />
     </div>
   );

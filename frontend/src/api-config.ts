@@ -1,4 +1,5 @@
 import axios from "axios";
+const token = localStorage.getItem("ditioscore_bearer_token");
 let url: string;
 
 if (
@@ -22,5 +23,8 @@ export const apiClient = axios.create({
 export const authApiClient = axios.create({
   baseURL: url,
   timeout: 60000,
+  headers: {
+    Authorization: `Bearer ${token}`,
+  },
   withCredentials: true,
 });

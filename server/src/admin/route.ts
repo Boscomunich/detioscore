@@ -5,6 +5,8 @@ import {
   unsuspendUser,
   banUser,
   unbanUser,
+  deleteUser,
+  changeUserRole,
 } from "./users";
 import {
   getAllpendingTransaction,
@@ -19,6 +21,7 @@ import {
   validateWinner,
   verifyUserTasks,
 } from "./competition";
+import { getMetrics } from "./metrics";
 
 const router = express.Router();
 
@@ -27,6 +30,7 @@ router.patch("/:id/suspend", suspendUser);
 router.patch("/:id/unsuspend", unsuspendUser);
 router.patch("/:id/ban", banUser);
 router.patch("/:id/unban", unbanUser);
+router.delete("/:id", deleteUser);
 router.get("/transaction", getAllpendingTransaction);
 router.get("/transaction/:userId", getUserTransaction);
 router.patch("/transaction/:userId", manualUpdteUserTransaction);
@@ -36,5 +40,7 @@ router.patch("/participant/task", verifyUserTasks);
 router.patch("/participant/disqualify", disqualifyTeam);
 router.patch("/participant/requalify", requalifyTeam);
 router.patch("/competition/winner", validateWinner);
+router.get("/metric", getMetrics);
+router.patch("/role/:id", changeUserRole);
 
 export const adminRouter = router;

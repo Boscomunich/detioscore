@@ -47,6 +47,7 @@ export interface IRank extends Document {
   totalWins: number;
   createdAt: Date;
   updatedAt: Date;
+  trend: "up" | "down" | "stable";
 }
 
 const RankingSchema: Schema<IRank> = new Schema(
@@ -103,6 +104,7 @@ const RankingSchema: Schema<IRank> = new Schema(
       points: { type: Number, required: true, default: 0 },
     },
 
+    trend: { type: String, enum: ["up", "down", "stable"], default: "stable" },
     points: { type: Number, required: true, default: 0, min: 0 },
     manGoSetWin: { type: Number, required: true, default: 0, min: 0 },
     topScoreWin: { type: Number, required: true, default: 0, min: 0 },
