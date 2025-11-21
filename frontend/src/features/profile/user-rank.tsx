@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils";
 import type { Rank } from "@/types/rank";
 import { authApiClient } from "@/api-config";
 import { Button } from "@/components/ui/button";
+import { useNavigate } from "react-router";
 
 type TabType = "overall" | "topscore" | "mangoset" | "league";
 
@@ -202,6 +203,8 @@ export default function UserRank() {
     return response.data;
   }
 
+  const navigate = useNavigate();
+
   const { data: rank, isLoading } = useQuery({
     queryKey: ["user rank"],
     queryFn: fetchData,
@@ -216,7 +219,9 @@ export default function UserRank() {
       <div className="container mx-auto px-4 py-8">
         <RankTabs rank={rank as Rank} />
       </div>
-      <Button className="w-full">View Leaderboard</Button>
+      <Button className="w-full" onClick={() => navigate("/leaderboard")}>
+        View Leaderboard
+      </Button>
     </main>
   );
 }

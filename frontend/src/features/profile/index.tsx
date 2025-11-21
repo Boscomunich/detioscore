@@ -44,7 +44,7 @@ export default function Profile() {
       <div className="w-full max-w-2xl flex items-center justify-between h-20">
         <div>
           <p className="text-xs font-extralight">Total balance</p>
-          <h1 className="text-lg font-bold">{data.wallet.balance} DC</h1>
+          <h1 className="text-lg font-bold">{data?.wallet.balance || 0} DC</h1>
         </div>
         <Link to="/notifications">
           <Bell className="size-8" />

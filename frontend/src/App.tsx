@@ -34,6 +34,7 @@ import CompetitionDetails from "./features/admin/competition/details";
 import { CompleteProfileForm } from "./features/auth/complete-profile";
 import AuthLayout from "./features/auth-layout";
 import Competitions from "./features/admin/competition";
+import LeaderboardPage from "./features/leaderboard/leaderboard";
 
 function ScrollToTop() {
   const { pathname } = useLocation();
@@ -88,6 +89,7 @@ function App() {
               element={<TransactionHistory />}
             />
             <Route path="notifications" element={<NotificationsPage />} />
+            <Route path="leaderboard" element={<LeaderboardPage />} />
           </Route>
 
           <Route path="signup" element={<SignupForm />} />

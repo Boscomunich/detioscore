@@ -21,11 +21,16 @@ type Props = {
   initialLimit?: number;
   heightClass?: string; // optional height class (default h-96)
 };
-
-type RankingResponse = {
+export type RankingResponse = {
   data: Rank[];
-  context?: {
-    totalPages?: number;
+  context: {
+    type: string;
+    scope: string;
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+    userCountry?: string | null;
   };
 };
 
@@ -63,6 +68,8 @@ export default function GlobalRank({
       return currentPage < totalPages ? currentPage + 1 : undefined;
     },
   });
+
+  console.log(data);
 
   // infinite scroll observer
   useEffect(() => {

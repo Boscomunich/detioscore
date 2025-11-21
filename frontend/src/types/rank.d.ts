@@ -1,11 +1,13 @@
 interface CountryRank {
   position: number;
   country: string;
+  trend: "up" | "down" | "stable";
 }
 
 interface WorldRank {
   position: number;
   country: string;
+  trend: "up" | "down" | "stable";
 }
 
 interface TopScoreRank {

@@ -9,7 +9,24 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { ArrowUp, ArrowDown, Minus } from "lucide-react";
-import type { RankData } from "@/lib/mock-data";
+
+interface RankData {
+  id: string;
+  username: string;
+  country: string;
+  firstWin: boolean;
+  totalWins: number;
+  topScoreWin: number;
+  manGoSetWin: number;
+  leagueWin: number;
+  points: number;
+  trend: "up" | "down" | "stable";
+  topScoreRank: any;
+  manGoSetRank: any;
+  leagueRank: any;
+  worldRank: any;
+  countryRank: any;
+}
 
 interface LeaderboardTableProps {
   data: RankData[];
@@ -51,17 +68,15 @@ export function LeaderboardTable({ data, type }: LeaderboardTableProps) {
           <TableHead>Player</TableHead>
           <TableHead className="hidden md:table-cell">Country</TableHead>
           <TableHead className="text-right">Wins</TableHead>
-          <TableHead className="text-right">Win Rate</TableHead>
           <TableHead className="text-right">Points</TableHead>
           <TableHead className="w-[50px]"></TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
         {data.map((item, index) => {
-          const rank = index + 4;
+          const rank = index + 1;
           const points = getPoints(item);
           const wins = getWins(item);
-          const winRate = Math.round((wins / (wins + 10)) * 100);
 
           return (
             <TableRow key={item.id} className="group">
@@ -97,17 +112,14 @@ export function LeaderboardTable({ data, type }: LeaderboardTableProps) {
                 </div>
               </TableCell>
               <TableCell className="hidden md:table-cell">
-                <div className="flex items-center gap-2">
-                  <span className="text-sm text-muted-foreground">
-                    {item.country}
-                  </span>
-                </div>
+                <span className="text-sm text-muted-foreground">
+                  {item.country}
+                </span>
               </TableCell>
-              <TableCell className="text-right font-mono">{wins}</TableCell>
-              <TableCell className="text-right font-mono text-muted-foreground">
-                {winRate}%
+              <TableCell className="text-center md:text-right font-mono">
+                {wins}
               </TableCell>
-              <TableCell className="text-right font-bold font-mono text-primary">
+              <TableCell className="text-center md:text-right font-bold font-mono text-primary">
                 {points.toLocaleString()}
               </TableCell>
               <TableCell>
@@ -122,11 +134,7 @@ export function LeaderboardTable({ data, type }: LeaderboardTableProps) {
 }
 
 function TrendIndicator({ trend }: { trend: "up" | "down" | "stable" }) {
-  if (trend === "up") {
-    return <ArrowUp className="w-4 h-4 text-emerald-500" />;
-  }
-  if (trend === "down") {
-    return <ArrowDown className="w-4 h-4 text-rose-500" />;
-  }
+  if (trend === "up") return <ArrowUp className="w-4 h-4 text-emerald-500" />;
+  if (trend === "down") return <ArrowDown className="w-4 h-4 text-rose-500" />;
   return <Minus className="w-4 h-4 text-muted-foreground/50" />;
 }

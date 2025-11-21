@@ -3,11 +3,13 @@ import mongoose, { Schema, Document, model } from "mongoose";
 interface CountryRank {
   position: number;
   country: string;
+  trend: "up" | "down" | "stable";
 }
 
 interface WorldRank {
   position: number;
   country: string;
+  trend: "up" | "down" | "stable";
 }
 
 interface TopScoreRank {
@@ -47,7 +49,6 @@ export interface IRank extends Document {
   totalWins: number;
   createdAt: Date;
   updatedAt: Date;
-  trend: "up" | "down" | "stable";
 }
 
 const RankingSchema: Schema<IRank> = new Schema(
@@ -62,20 +63,40 @@ const RankingSchema: Schema<IRank> = new Schema(
     countryRank: {
       position: { type: Number, required: true, default: 0 },
       country: { type: String, required: true },
+      trend: {
+        type: String,
+        enum: ["up", "down", "stable"],
+        default: "stable",
+      },
     },
     worldRank: {
       position: { type: Number, required: true, default: 0 },
       country: { type: String, required: true },
+      trend: {
+        type: String,
+        enum: ["up", "down", "stable"],
+        default: "stable",
+      },
     },
 
     topScoreRank: {
       worldRank: {
         position: { type: Number, required: true, default: 0 },
         country: { type: String, required: true },
+        trend: {
+          type: String,
+          enum: ["up", "down", "stable"],
+          default: "stable",
+        },
       },
       countryRank: {
         position: { type: Number, required: true, default: 0 },
         country: { type: String, required: true },
+        trend: {
+          type: String,
+          enum: ["up", "down", "stable"],
+          default: "stable",
+        },
       },
       points: { type: Number, required: true, default: 0 },
     },
@@ -84,10 +105,20 @@ const RankingSchema: Schema<IRank> = new Schema(
       worldRank: {
         position: { type: Number, required: true, default: 0 },
         country: { type: String, required: true },
+        trend: {
+          type: String,
+          enum: ["up", "down", "stable"],
+          default: "stable",
+        },
       },
       countryRank: {
         position: { type: Number, required: true, default: 0 },
         country: { type: String, required: true },
+        trend: {
+          type: String,
+          enum: ["up", "down", "stable"],
+          default: "stable",
+        },
       },
       points: { type: Number, required: true, default: 0 },
     },
@@ -96,15 +127,24 @@ const RankingSchema: Schema<IRank> = new Schema(
       worldRank: {
         position: { type: Number, required: true, default: 0 },
         country: { type: String, required: true },
+        trend: {
+          type: String,
+          enum: ["up", "down", "stable"],
+          default: "stable",
+        },
       },
       countryRank: {
         position: { type: Number, required: true, default: 0 },
         country: { type: String, required: true },
+        trend: {
+          type: String,
+          enum: ["up", "down", "stable"],
+          default: "stable",
+        },
       },
       points: { type: Number, required: true, default: 0 },
     },
 
-    trend: { type: String, enum: ["up", "down", "stable"], default: "stable" },
     points: { type: Number, required: true, default: 0, min: 0 },
     manGoSetWin: { type: Number, required: true, default: 0, min: 0 },
     topScoreWin: { type: Number, required: true, default: 0, min: 0 },
