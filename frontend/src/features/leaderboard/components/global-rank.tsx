@@ -69,8 +69,6 @@ export default function GlobalRank({
     },
   });
 
-  console.log(data);
-
   // infinite scroll observer
   useEffect(() => {
     const observer = new IntersectionObserver((entries) => {

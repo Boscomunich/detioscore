@@ -112,11 +112,11 @@ export default function SelectTeamForm({
   const userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
   const { data, isLoading, isError } = useQuery<FixturesApiResponse>({
-    queryKey: ["select fixtures", competition?._id],
+    queryKey: ["select fixtures", competition?._id, "NS,TBD"],
     queryFn: async () => {
       try {
         const response = await apiClient.get(
-          `/livescore/daily-fixtures?date=${competitionDate}&timezone=${userTimezone}`
+          `/livescore/daily-fixtures?date=${competitionDate}&timezone=${userTimezone}&status=NS,TBD`
         );
         return response.data;
       } catch (err: any) {

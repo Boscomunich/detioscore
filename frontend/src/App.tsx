@@ -35,6 +35,8 @@ import { CompleteProfileForm } from "./features/auth/complete-profile";
 import AuthLayout from "./features/auth-layout";
 import Competitions from "./features/admin/competition";
 import LeaderboardPage from "./features/leaderboard/leaderboard";
+import NotificationDetail from "./features/profile/notification-details";
+import AchievementStats from "./features/profile/achievements";
 
 function ScrollToTop() {
   const { pathname } = useLocation();
@@ -89,6 +91,8 @@ function App() {
               element={<TransactionHistory />}
             />
             <Route path="notifications" element={<NotificationsPage />} />
+            <Route path="notifications/:id" element={<NotificationDetail />} />
+            <Route path="achievements" element={<AchievementStats />} />
             <Route path="leaderboard" element={<LeaderboardPage />} />
           </Route>
 

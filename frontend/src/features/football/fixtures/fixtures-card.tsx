@@ -60,14 +60,14 @@ export default function FixturesCard() {
     );
 
   return (
-    <div className="flex flex-col gap-8 mt-4">
+    <div className="flex flex-col gap-4 md:gap-6 mt-4">
       {sortedLeagues.map((league) => {
         const leagueStartDate = new Date(
           league.matches[0].fixture.date
         ).toLocaleDateString("en-US", dateFormat);
 
         return (
-          <div key={league.leagueId} className="mb-6 bg-auto rounded-xl border">
+          <div key={league.leagueId} className=" bg-auto rounded-xl border">
             {/* League Header */}
             <div className="mb-3 flex items-start gap-2 bg-background/50 p-4">
               <img

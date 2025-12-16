@@ -26,7 +26,7 @@ export function ChangeUsernameDialog() {
     <Dialog>
       <form>
         <DialogTrigger asChild className="cursor-pointer">
-          <div className="text-base font-semibold">Change username</div>
+          <div className="text-base font-semibold py-4">Change username</div>
         </DialogTrigger>
         <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>

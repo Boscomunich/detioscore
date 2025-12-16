@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import type { AdminCompetition, Participant } from "@/types/competition";
 import ParticipantSection from "./participant-section";
+import { DeactivateDialog } from "./deactivate-competition-dialog";
 
 interface CompetitonDetails {
   competition: AdminCompetition;
@@ -94,8 +95,8 @@ export default function CompetitionDetails() {
   return (
     <div className="min-h-screen bg-background p-4 md:p-8">
       <div className="mx-auto max-w-7xl space-y-6">
-        {/* Header */}
-        <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+        {/* HEADER */}
+        <div className="flex gap-4 justify-between">
           <div className="space-y-2">
             <div className="flex items-center gap-3">
               <h1 className="font-sans text-2xl lg:text-4xl font-bold uppercase tracking-tight text-balance">
@@ -108,9 +109,10 @@ export default function CompetitionDetails() {
               ID: {competition._id}
             </p>
           </div>
+          <DeactivateDialog competitionId={competition._id} />
         </div>
 
-        {/* Key Metrics Grid */}
+        {/* GRID */}
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           <Card className="bg-card p-4">
             <div className="flex items-center gap-3">
@@ -165,56 +167,70 @@ export default function CompetitionDetails() {
           </Card>
         </div>
 
-        {/* Competition Details */}
+        {/* COMP INFO */}
         <div className="grid gap-6 lg:grid-cols-2">
-          {/* Basic Information */}
+          {/* BASIC INFO */}
           <Card className="bg-card p-6">
             <h2 className="mb-4 flex items-center gap-2 text-xl font-bold">
               <Shield className="h-5 w-5 text-primary" />
               Competition Information
             </h2>
+
             <div className="space-y-3">
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Type</span>
                 <span className="font-semibold">{competition.type}</span>
               </div>
+
               <Separator />
+
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Visibility</span>
                 <Badge variant={competition.isPublic ? "default" : "secondary"}>
                   {competition.isPublic ? "Public" : "Private"}
                 </Badge>
               </div>
+
               <Separator />
+
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Invitation Code</span>
                 <code className="rounded bg-muted px-2 py-1 font-mono text-sm">
                   {competition.invitationCode}
                 </code>
               </div>
+
               <Separator />
+
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Created By</span>
                 <span className="font-mono text-sm">
                   {competition.createdBy.username}
                 </span>
               </div>
+
               <Separator />
+
+              {/* WINNER FIXED */}
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Winner</span>
+
                 <span className="font-semibold">
-                  {competition?.winner?.username || "Not determined"}
+                  {competition?.winner?.length > 0
+                    ? competition.winner.map((w: any) => w.username).join(", ")
+                    : "Not determined"}
                 </span>
               </div>
             </div>
           </Card>
 
-          {/* Dates & Timeline */}
+          {/* TIMELINE */}
           <Card className="bg-card p-6">
             <h2 className="mb-4 flex items-center gap-2 text-xl font-bold">
               <Calendar className="h-5 w-5 text-primary" />
               Timeline
             </h2>
+
             <div className="space-y-3">
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Start Date</span>
@@ -222,14 +238,18 @@ export default function CompetitionDetails() {
                   {formatDate(competition.startDate)}
                 </span>
               </div>
+
               <Separator />
+
               <div className="flex justify-between">
                 <span className="text-muted-foreground">End Date</span>
                 <span className="font-semibold">
                   {formatDate(competition.endDate)}
                 </span>
               </div>
+
               <Separator />
+
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Created At</span>
                 <span className="font-semibold">
@@ -239,12 +259,13 @@ export default function CompetitionDetails() {
             </div>
           </Card>
 
-          {/* Financial Details */}
+          {/* FINANCIAL DETAILS */}
           <Card className="bg-card p-6">
             <h2 className="mb-4 flex items-center gap-2 text-xl font-bold">
               <DollarSign className="h-5 w-5 text-primary" />
               Financial Details
             </h2>
+
             <div className="space-y-3">
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Entry Fee</span>
@@ -252,21 +273,27 @@ export default function CompetitionDetails() {
                   DC {competition.entryFee}
                 </span>
               </div>
+
               <Separator />
+
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Host Contribution</span>
                 <span className="text-xl font-bold text-primary">
                   DC {competition.hostContribution}
                 </span>
               </div>
+
               <Separator />
+
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Total Prize Pool</span>
                 <span className="text-2xl font-bold text-primary">
                   DC {competition.prizePool}
                 </span>
               </div>
+
               <Separator />
+
               <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground">
                   Potential from {competition.participantCap} participants
@@ -280,12 +307,13 @@ export default function CompetitionDetails() {
             </div>
           </Card>
 
-          {/* Team Requirements */}
+          {/* TEAM REQUIREMENTS */}
           <Card className="bg-card p-6">
             <h2 className="mb-4 flex items-center gap-2 text-xl font-bold">
               <Trophy className="h-5 w-5 text-primary" />
               Team Requirements
             </h2>
+
             <div className="space-y-3">
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Required Teams</span>
@@ -293,14 +321,18 @@ export default function CompetitionDetails() {
                   {competition.requiredTeams}
                 </span>
               </div>
+
               <Separator />
+
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Min Participants</span>
                 <span className="font-semibold">
                   {competition.minParticipants}
                 </span>
               </div>
+
               <Separator />
+
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Participant Cap</span>
                 <span className="font-semibold">
@@ -311,13 +343,14 @@ export default function CompetitionDetails() {
           </Card>
         </div>
 
-        {/* Rules */}
+        {/* RULES */}
         {competition.rules && competition.rules.length > 0 && (
           <Card className="bg-card p-6">
             <h2 className="mb-4 flex items-center gap-2 text-xl font-bold">
               <Shield className="h-5 w-5 text-primary" />
               Competition Rules
             </h2>
+
             <div className="space-y-3">
               {competition.rules.map((rule: any, index: number) => (
                 <div
@@ -327,8 +360,10 @@ export default function CompetitionDetails() {
                   <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary text-sm font-bold text-primary-foreground">
                     {rule.step}
                   </div>
+
                   <div className="flex-1">
                     <p className="font-medium">{rule.description}</p>
+
                     {rule.stepVerification && (
                       <Badge variant="outline" className="mt-2">
                         <CheckCircle2 className="mr-1 h-3 w-3" />

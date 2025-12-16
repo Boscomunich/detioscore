@@ -8,6 +8,7 @@ import {
   DollarSign,
   Users,
   TrendingUp,
+  Loader2,
 } from "lucide-react";
 
 export function Admin() {
@@ -16,16 +17,17 @@ export function Admin() {
     return response.data;
   }
 
-  const { data } = useQuery({
+  const { data, isLoading } = useQuery({
     queryKey: ["admin-metrics"],
     queryFn: fetchData,
   });
 
-  console.log(data);
-
-  if (!data) {
-    return <p>Loading...</p>;
-  }
+  if (isLoading)
+    return (
+      <div className="flex justify-center py-10">
+        <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+      </div>
+    );
 
   // Helper function to determine trend
   const getTrend = (change: number | null) => {

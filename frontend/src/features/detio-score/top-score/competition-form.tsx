@@ -13,7 +13,7 @@ import { Input } from "@/components/ui/input";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import z from "zod";
-import { Loader, X } from "lucide-react";
+import { ChevronLeft, Loader, X } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useMutation } from "@tanstack/react-query";
@@ -119,8 +119,10 @@ export default function CreateTopScoreCompetitionPage() {
       form.reset();
       toast.success("Competition created successfully!");
     },
-    onError: (error) => {
-      toast.error("Error creating competition:");
+    onError: (error: any) => {
+      toast.error(
+        error.response?.data?.message || "Failed to create competition"
+      );
       console.log(error);
     },
   });
@@ -132,13 +134,15 @@ export default function CreateTopScoreCompetitionPage() {
 
   return (
     <>
-      <div
-        className="text-sm w-[95%] max-w-4xl mx-auto font-[400] px-6 cursor-pointer"
-        onClick={() => navigate(-1)}
-      >
-        ← Back
+      <div className="space-y-4 max-w-3xl px-4 rounded-sm my-4 w-[98%] mx-auto">
+        <span
+          onClick={() => navigate(-1)}
+          className="flex capitalize gap-1.5 cursor-pointer"
+        >
+          <ChevronLeft /> Back
+        </span>
       </div>
-      <div className="h-full min-h-[80vh] w-[95%] flex flex-col justify-center items-center max-w-4xl border rounded-sm my-2 mb-24 py-6 mx-auto px-6">
+      <div className="h-full min-h-[80vh] w-[95%] flex flex-col justify-center items-center max-w-4xl border rounded-sm my-2 mb-24 py-6 mx-auto px-6 bg-auto">
         <h1 className="text-2xl font-bold mb-6">Host a TopScore Competition</h1>
         <Form {...form}>
           <form

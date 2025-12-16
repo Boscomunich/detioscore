@@ -10,6 +10,7 @@ import FixturesCard from "./fixtures-card";
 import LiveFixturesCard from "./live-fixtures-card";
 import { cn } from "@/lib/utils";
 import { useLeague } from "@/features/hooks/use-leagues";
+import CompetitionOverview from "../competition-overview";
 
 function normalizeDate(date: Date) {
   const d = new Date(date);
@@ -29,6 +30,7 @@ export default function Fixtures() {
 
   return (
     <div className="w-full mx-auto p-4 max-w-2xl ">
+      <CompetitionOverview />
       {/* Header */}
       <div className="flex gap-3 md:gap-6 items-center justify-center w-full px-4">
         {/* Live Toggle */}

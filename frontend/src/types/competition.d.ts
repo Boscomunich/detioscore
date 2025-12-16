@@ -191,7 +191,7 @@ export interface AdminCompetition {
   };
   startDate: string;
   endDate: string;
-  winner: User;
+  winner: User[];
   hostContribution: number;
 }
 
