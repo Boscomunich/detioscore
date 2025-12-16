@@ -3,6 +3,12 @@ import Competition from "../../models/competition";
 import TeamSelection from "../../models/teams";
 import User from "../../models/user";
 import AppError from "../../middleware/error";
+import {
+  payCompetitionWinners,
+  updateParticipantStreak,
+} from "../../background-tasks/competition-tasks";
+import { rewardEmitter } from "../../event-emitter/reward-emitter";
+import { eventEmitter } from "../../event-emitter";
 
 export async function getCompetitionParticipant(
   req: Request,
@@ -218,27 +224,16 @@ export async function validateWinner(
     const competition = await Competition.findById(competitionId);
     if (!competition) throw new AppError("Competition not found.", 404);
 
-    //check that the user is a participant
-    const isParticipant = competition.participants.some(
-      (p) => p.user.toString() === userId
-    );
+    const winners = Array.isArray(userId) ? userId : [userId];
 
-    if (!isParticipant)
-      throw new AppError(
-        "This user is not a participant in the competition.",
-        404
-      );
+    // Save winners (remove duplicates)
+    competition.winner = [...new Set(winners.map((w) => w.toString()))];
 
-    competition.winner = userId;
     await competition.save();
 
     return res.status(200).json({
-      message: "Winner updated successfully.",
-      competition: {
-        id: competition._id,
-        name: competition.name,
-        winner: competition.winner,
-      },
+      message: "Winner(s) updated successfully.",
+      competition,
     });
   } catch (error) {
     console.error("Error validating winner:", error);
@@ -246,18 +241,25 @@ export async function validateWinner(
   }
 }
 
-export async function deactivateCompetition(
+export async function confirmChangesAndDeactivateCompetition(
   req: Request,
   res: Response,
   next: NextFunction
 ) {
-  const { competitionId } = req.body;
+  const { competitionId } = req.params;
   try {
     const competition = await Competition.findById(competitionId);
     if (!competition) throw new AppError("Competition not found.", 404);
     competition.isActive = false;
+    await payCompetitionWinners(competition._id);
+    await updateParticipantStreak(competition._id);
     await competition.save();
-
+    rewardEmitter.emit(
+      "winning-competition-achievement",
+      competition.winner,
+      competition
+    );
+    eventEmitter.emit("recalculate-ranks");
     return res.status(200).json({
       message: "Competition deactivated successfully.",
     });

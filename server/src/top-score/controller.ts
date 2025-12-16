@@ -5,12 +5,16 @@ import { AuthenticatedRequest } from "../middleware/session";
 import { logger } from "../logger";
 import { generateRandomString } from "better-auth/crypto";
 import proofEmitter from "../event-emitter/upload-emitter";
+import { removeDitioCoin } from "../transaction/utils";
+import { rewardEmitter } from "../event-emitter/reward-emitter";
+import { eventEmitter } from "../event-emitter";
 
 export async function createTopScore(
   req: AuthenticatedRequest,
   res: Response,
   next: NextFunction
 ) {
+  const userId = req.user?.id;
   const {
     name,
     numberOfTeams,
@@ -30,10 +34,11 @@ export async function createTopScore(
   end.setUTCHours(23, 59, 59, 999);
 
   try {
+    await removeDitioCoin(price, userId);
     const competition = new Competition({
       name,
       type: "TopScore",
-      createdBy: req.user?.id,
+      createdBy: userId,
       requiredTeams: numberOfTeams,
       participantCap,
       prizePool: price,
@@ -52,10 +57,16 @@ export async function createTopScore(
     });
 
     await competition.save();
+
+    rewardEmitter.emit(
+      "creating-competition-achievement",
+      req.user?.id,
+      competition._id
+    );
+    eventEmitter.emit("recalculate-ranks");
     res.status(201).json(competition);
   } catch (error) {
-    logger.error("createTopScore error:", error);
-    next(new AppError("Failed to create competition", 500));
+    next(error);
   }
 }
 
@@ -97,10 +108,9 @@ export async function uploadValidationProof(
     });
 
     res.status(202).json({
-      message: "Proof upload queued successfully (delayed response)",
+      message: "Proof upload queued successfully",
     });
   } catch (error) {
-    console.error(error);
     next(error);
   }
 }

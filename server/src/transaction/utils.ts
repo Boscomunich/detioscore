@@ -61,7 +61,7 @@ export async function removeDitioCoin(amount: number, userId: string) {
     throw new AppError("User ID is required", 400);
   }
 
-  const wallet = await Wallet.findOne({ createdBy: userId });
+  const wallet = await Wallet.findOne({ user: userId });
   if (!wallet || wallet.balance < amount) {
     throw new AppError(
       "your coin balance is not sufficient to perform this action",
@@ -82,7 +82,7 @@ export async function addDitioCoin(amount: number, userId: string) {
     throw new AppError("User ID is required", 400);
   }
 
-  const wallet = await Wallet.findOne({ createdBy: userId });
+  const wallet = await Wallet.findOne({ user: userId });
   if (!wallet) {
     throw new AppError(
       "you need to create a wallet before performing this action",
@@ -90,7 +90,7 @@ export async function addDitioCoin(amount: number, userId: string) {
     );
   }
 
-  wallet.balance -= amount;
+  wallet.balance += amount;
   await wallet.save();
   return wallet;
 }

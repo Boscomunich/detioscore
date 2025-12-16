@@ -1,5 +1,5 @@
 import { logger } from "../logger";
-import Ranks from "../models/ranking";
+import Ranks, { IRank } from "../models/ranking";
 import User from "../models/user";
 
 /**
@@ -80,10 +80,8 @@ export const updateUserCountryAndRanks = async (
   userId: string,
   newCountry: string
 ) => {
-  console.log("updating country to", userId, newCountry);
   try {
     let rank = await Ranks.findOne({ user: userId });
-    console.log("rank found", rank);
     if (!rank) {
       return;
     }
@@ -107,5 +105,164 @@ export const updateUserCountryAndRanks = async (
   } catch (error) {
     logger.error("Error updating user country and ranks:", error);
     throw error;
+  }
+};
+
+/**
+ * Recalculates all world and country ranks for every rank document
+ * and updates the trend (up, down, stable) for all rank fields.
+ */
+export const recalculateAllRanks = async () => {
+  try {
+    const allRanks = await Ranks.find().lean();
+    if (!allRanks || allRanks.length === 0) return;
+
+    const bulkOps: any[] = [];
+
+    //World rank for overall points
+    const worldSorted = [...allRanks].sort((a, b) => b.points - a.points);
+    for (let i = 0; i < worldSorted.length; i++) {
+      const rank = worldSorted[i];
+      if (!rank) continue;
+      const newPosition = i + 1;
+      const trend =
+        newPosition < rank.worldRank.position
+          ? "up"
+          : newPosition > rank.worldRank.position
+          ? "down"
+          : "stable";
+
+      bulkOps.push({
+        updateOne: {
+          filter: { _id: rank._id },
+          update: {
+            $set: {
+              "worldRank.position": newPosition,
+              "worldRank.trend": trend,
+            },
+          },
+        },
+      });
+    }
+
+    //Country rank for overall points
+    const countryMap: Record<string, IRank[]> = {};
+    allRanks.forEach((r) => {
+      const country = r.countryRank.country || "Unknown";
+      if (!countryMap[country]) countryMap[country] = [];
+      countryMap[country].push(r);
+    });
+
+    for (const [country, ranks] of Object.entries(countryMap)) {
+      const sortedCountry = [...ranks].sort((a, b) => b.points - a.points);
+      for (let i = 0; i < sortedCountry.length; i++) {
+        const rank = sortedCountry[i];
+        if (!rank) continue;
+        const newPosition = i + 1;
+        const trend =
+          newPosition < rank.countryRank.position
+            ? "up"
+            : newPosition > rank.countryRank.position
+            ? "down"
+            : "stable";
+
+        bulkOps.push({
+          updateOne: {
+            filter: { _id: rank._id },
+            update: {
+              $set: {
+                "countryRank.position": newPosition,
+                "countryRank.trend": trend,
+              },
+            },
+          },
+        });
+      }
+    }
+
+    //Game-specific ranks
+    const gameFields: ("topScoreRank" | "manGoSetRank" | "leagueRank")[] = [
+      "topScoreRank",
+      "manGoSetRank",
+      "leagueRank",
+    ];
+
+    for (const field of gameFields) {
+      // Sort by points in that game
+      const sortedByGame = [...allRanks].sort(
+        (a, b) => b[field].points - a[field].points
+      );
+
+      // Calculate world rank and trend for this game
+      for (let i = 0; i < sortedByGame.length; i++) {
+        const rank = sortedByGame[i];
+        if (!rank) continue;
+        const newWorldPos = i + 1;
+        const worldTrend =
+          newWorldPos < rank[field].worldRank.position
+            ? "up"
+            : newWorldPos > rank[field].worldRank.position
+            ? "down"
+            : "stable";
+
+        bulkOps.push({
+          updateOne: {
+            filter: { _id: rank._id },
+            update: {
+              $set: {
+                [`${field}.worldRank.position`]: newWorldPos,
+                [`${field}.worldRank.trend`]: worldTrend,
+              },
+            },
+          },
+        });
+      }
+
+      // Calculate country rank and trend for this game
+      const countryGroups: Record<string, IRank[]> = {};
+      allRanks.forEach((r) => {
+        const country = r[field].countryRank.country || "Unknown";
+        if (!countryGroups[country]) countryGroups[country] = [];
+        countryGroups[country].push(r);
+      });
+
+      for (const [country, ranks] of Object.entries(countryGroups)) {
+        const sortedCountry = [...ranks].sort(
+          (a, b) => b[field].points - a[field].points
+        );
+        for (let i = 0; i < sortedCountry.length; i++) {
+          const rank = sortedCountry[i];
+          if (!rank) continue;
+          const newCountryPos = i + 1;
+          const countryTrend =
+            newCountryPos < rank[field].countryRank.position
+              ? "up"
+              : newCountryPos > rank[field].countryRank.position
+              ? "down"
+              : "stable";
+
+          bulkOps.push({
+            updateOne: {
+              filter: { _id: rank._id },
+              update: {
+                $set: {
+                  [`${field}.countryRank.position`]: newCountryPos,
+                  [`${field}.countryRank.trend`]: countryTrend,
+                },
+              },
+            },
+          });
+        }
+      }
+    }
+
+    if (bulkOps.length > 0) {
+      const result = await Ranks.bulkWrite(bulkOps);
+      logger.info(
+        `Recalculated ranks & trends for all users. Modified: ${result.modifiedCount}`
+      );
+    }
+  } catch (error) {
+    logger.error("Error recalculating ranks:", error);
   }
 };

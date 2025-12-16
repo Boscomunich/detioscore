@@ -203,3 +203,36 @@ export async function changeUserRole(
     next(error);
   }
 }
+
+export async function getUserByIdOrEmail(
+  req: Request,
+  res: Response,
+  next: NextFunction
+) {
+  try {
+    // read query from query string
+    const query = req.query.query as string;
+
+    if (!query) {
+      throw new AppError("Query parameter is required", 400);
+    }
+
+    let user: typeof User | null = null;
+
+    // Check if query is a valid MongoDB ObjectId
+    if (/^[0-9a-fA-F]{24}$/.test(query)) {
+      user = await User.findById(query);
+    }
+
+    // If not found by ID, check by email
+    if (!user) {
+      user = await User.findOne({ email: query });
+    }
+
+    if (!user) throw new AppError("User not found", 404);
+
+    res.status(200).json({ user });
+  } catch (error) {
+    next(error);
+  }
+}

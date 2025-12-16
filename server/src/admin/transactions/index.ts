@@ -95,6 +95,7 @@ export async function manualUpdteUserTransaction(
       transaction,
     });
   } catch (error) {
+    console.log("console error", error);
     next(error);
   }
 }

@@ -11,19 +11,20 @@ export interface IAchievement extends Document {
   iconUrl?: string;
 }
 
-const AchievementSchema: Schema<IAchievement> = new Schema({
-  user: {
-    type: Schema.Types.ObjectId,
-    ref: "User",
-    required: true,
+const AchievementSchema: Schema<IAchievement> = new Schema(
+  {
+    user: {
+      type: Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+    },
+    name: { type: String, required: true, unique: true },
+    description: { type: String, required: true },
+    points: { type: Number, required: true },
+    iconUrl: { type: String, default: "" },
   },
-  name: { type: String, required: true, unique: true },
-  description: { type: String, required: true },
-  points: { type: Number, required: true },
-  createdAt: { type: Date, default: Date.now },
-  updatedAt: { type: Date, default: Date.now },
-  iconUrl: { type: String, default: "" },
-});
+  { timestamps: true }
+);
 
 const Achievement = model<IAchievement>("Achievement", AchievementSchema);
 export default Achievement;

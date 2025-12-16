@@ -12,17 +12,26 @@ interface MongooseDuplicateKeyError extends Error {
 }
 
 // This handler will catch both AppError and raw errors
-const globalErrorHandler = (
+export const globalErrorHandler = (
   err: AppError | MongooseValidationError | MongooseDuplicateKeyError,
   req: Request,
   res: Response,
   next: NextFunction
 ) => {
-  let statusCode = (err as AppError).statusCode || 500;
-  let status = (err as AppError).status || "error";
+  // For AppError instances, use their properties directly
+  if (err instanceof AppError) {
+    return res.status(err.statusCode).json({
+      status: err.status,
+      message: err.message,
+      statusCode: err.statusCode,
+      isOperational: err.isOperational,
+    });
+  }
+
+  let statusCode = 500;
+  let status = "error";
   let message = err.message || "Something went wrong";
 
-  // Handle Mongoose validation errors
   if (err.name === "ValidationError" && "errors" in err) {
     statusCode = 400;
     message = Object.values(err.errors!)
@@ -31,7 +40,6 @@ const globalErrorHandler = (
     status = "fail";
   }
 
-  // Handle Mongoose duplicate key errors
   if ("code" in err && err.code === 11000) {
     statusCode = 400;
     message = `Duplicate field value: ${JSON.stringify(err.keyValue)}`;
@@ -50,7 +58,6 @@ const globalErrorHandler = (
   res.status(statusCode).json({
     status,
     message,
+    statusCode,
   });
 };
-
-export default globalErrorHandler;

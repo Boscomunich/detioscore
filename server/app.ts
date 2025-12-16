@@ -14,8 +14,8 @@ import { livescoreRouter } from "./src/livescore/route";
 import { topScoreRouter } from "./src/top-score/route";
 import { manGoSetRouter } from "./src/mango-set/route";
 import { competitionRouter } from "./src/competition/route";
-import globalErrorHandler from "./src/middleware/error-handler";
-import { createAuth } from "./utils/auth";
+import { globalErrorHandler } from "./src/middleware/error-handler";
+import { createAuth } from "./libs/auth";
 import { transactionRouter } from "./src/transaction/route";
 import { notificationRouter } from "./src/notification/route";
 import { userRouter } from "./src/user/route";
@@ -42,7 +42,6 @@ async function startServer() {
   await connectToDatabase();
 
   const auth = createAuth();
-
   const options = {
     definition: {
       openapi: "3.0.0",
@@ -61,10 +60,22 @@ async function startServer() {
           description: "dev server",
         },
       ],
-      components: {},
       security: [],
     },
-    apis: ["./src/mango-set/docs.ts"], // Path to your API routes
+    apis: [
+      "./src/auth/docs.ts",
+      "./src/user/docs.ts",
+      "./src/mango-set/docs.ts",
+      "./src/livescore/docs.ts",
+      "./src/competition/docs.ts",
+      "./src/top-score/docs.ts",
+      "./src/ranks/docs.ts",
+      "./src/admin/docs.ts",
+      "./swaggerschema/schema.ts",
+      "./swaggerschema/competition.ts",
+      "./swaggerschema/ranking.ts",
+      "./swaggerschema/admin.ts",
+    ],
   };
 
   const specs = swaggerJsdoc(options);

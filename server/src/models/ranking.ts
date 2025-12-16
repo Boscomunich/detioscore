@@ -32,6 +32,14 @@ interface LeagueRank {
 
 export interface IRank extends Document {
   user: mongoose.Types.ObjectId;
+  name:
+    | "Beginner"
+    | "Bronze"
+    | "Silver"
+    | "Gold"
+    | "Platinum"
+    | "Diamond"
+    | "Legend";
   countryRank: CountryRank;
   worldRank: WorldRank;
   topScoreRank: TopScoreRank;
@@ -58,6 +66,20 @@ const RankingSchema: Schema<IRank> = new Schema(
       ref: "User",
       required: true,
       unique: true,
+    },
+
+    name: {
+      type: String,
+      enum: [
+        "Beginner",
+        "Bronze",
+        "Silver",
+        "Gold",
+        "Platinum",
+        "Diamond",
+        "Legend",
+      ],
+      default: "Beginner",
     },
 
     countryRank: {

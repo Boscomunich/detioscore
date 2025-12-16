@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import { IUser } from "../models/user";
-
+import AppError from "./error";
 export interface AuthenticatedRequest extends Request {
   user?: IUser;
   jwtToken?: string;
@@ -30,29 +30,28 @@ function buildFetchHeaders(req: Request): Headers {
 export const tokenAuthMiddleware = (auth: any) => {
   return async (
     req: AuthenticatedRequest,
-    res: Response,
+    _res: Response,
     next: NextFunction
   ) => {
     try {
       const token = extractBearerToken(req);
       if (!token) {
-        return res.status(401).json({ error: "Missing Bearer token" });
+        throw new AppError("Missing Bearer token", 401);
       }
 
       req.jwtToken = token;
 
       const fetchHeaders = buildFetchHeaders(req);
-
       const session = await auth.api.getSession({ headers: fetchHeaders });
+
       if (!session) {
-        return res.status(401).json({ error: "Invalid or expired token" });
+        throw new AppError("Invalid or expired token", 401);
       }
 
       req.user = session.user;
       next();
-    } catch (err) {
-      console.error("Token validation failed:", err);
-      return res.status(401).json({ error: "Unauthorized" });
+    } catch (err: any) {
+      next(err instanceof AppError ? err : new AppError("Unauthorized", 401));
     }
   };
 };
@@ -60,35 +59,32 @@ export const tokenAuthMiddleware = (auth: any) => {
 export const adminTokenAuthMiddleware = (auth: any) => {
   return async (
     req: AuthenticatedRequest,
-    res: Response,
+    _res: Response,
     next: NextFunction
   ) => {
     try {
       const token = extractBearerToken(req);
       if (!token) {
-        return res.status(401).json({ error: "Missing Bearer token" });
+        throw new AppError("Missing Bearer token", 401);
       }
 
       req.jwtToken = token;
 
       const fetchHeaders = buildFetchHeaders(req);
-
       const session = await auth.api.getSession({ headers: fetchHeaders });
+
       if (!session) {
-        return res.status(401).json({ error: "Invalid or expired token" });
+        throw new AppError("Invalid or expired token", 401);
       }
 
       if (session.user.role !== "admin") {
-        return res
-          .status(403)
-          .json({ error: "Forbidden: Admin access required" });
+        throw new AppError("Forbidden: Admin access required", 403);
       }
 
       req.user = session.user;
       next();
-    } catch (err) {
-      console.error("Admin token validation failed:", err);
-      return res.status(401).json({ error: "Unauthorized" });
+    } catch (err: any) {
+      next(err instanceof AppError ? err : new AppError("Unauthorized", 401));
     }
   };
 };

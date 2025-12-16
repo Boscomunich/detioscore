@@ -5,6 +5,7 @@ import AppError from "../middleware/error";
 import mongoose from "mongoose";
 import TeamSelection from "../models/teams";
 import User from "../models/user";
+import { removeDitioCoin } from "../transaction/utils";
 
 export async function fetchAllActiveCompetition(
   req: AuthenticatedRequest,
@@ -16,12 +17,54 @@ export async function fetchAllActiveCompetition(
   const skip = (page - 1) * limit;
 
   try {
+    const filter: any = { isActive: true };
+
+    // Competition Type Filtering
+    if (req.query.type) {
+      filter.type = req.query.type;
+    }
+    // Date Range Filtering
+    if (req.query.startDateFrom || req.query.startDateTo) {
+      filter.startDate = {};
+      if (req.query.startDateFrom) {
+        filter.startDate.$gte = new Date(req.query.startDateFrom as string);
+      }
+      if (req.query.startDateTo) {
+        filter.startDate.$lte = new Date(req.query.startDateTo as string);
+      }
+    }
+
+    if (req.query.endDateFrom || req.query.endDateTo) {
+      filter.endDate = {};
+      if (req.query.endDateFrom) {
+        filter.endDate.$gte = new Date(req.query.endDateFrom as string);
+      }
+      if (req.query.endDateTo) {
+        filter.endDate.$lte = new Date(req.query.endDateTo as string);
+      }
+    }
+
+    if (req.query.createdFrom || req.query.createdTo) {
+      filter.createdAt = {};
+      if (req.query.createdFrom) {
+        filter.createdAt.$gte = new Date(req.query.createdFrom as string);
+      }
+      if (req.query.createdTo) {
+        filter.createdAt.$lte = new Date(req.query.createdTo as string);
+      }
+    }
+
+    // Sorting
+    const sortField = (req.query.sortBy as string) || "createdAt";
+    const sortOrder = req.query.sortOrder === "asc" ? 1 : -1;
+
     const [competitions, totalCompetitions] = await Promise.all([
-      Competition.find({ isActive: true })
-        .sort({ createdAt: -1 })
+      Competition.find(filter)
+        .sort({ [sortField]: sortOrder })
         .skip(skip)
         .limit(limit),
-      Competition.countDocuments({ isActive: true }),
+
+      Competition.countDocuments(filter),
     ]);
 
     const totalPages = Math.ceil(totalCompetitions / limit);
@@ -34,6 +77,7 @@ export async function fetchAllActiveCompetition(
         currentPage: page,
         hasNextPage: page < totalPages,
         hasPrevPage: page > 1,
+        limit,
       },
     });
   } catch (error) {
@@ -51,12 +95,55 @@ export async function fetchAllInActiveCompetition(
   const skip = (page - 1) * limit;
 
   try {
+    const filter: any = { isActive: false };
+
+    //Competition Type Filtering
+    if (req.query.type) {
+      filter.type = req.query.type;
+    }
+
+    // Date Range Filtering
+    if (req.query.startDateFrom || req.query.startDateTo) {
+      filter.startDate = {};
+      if (req.query.startDateFrom) {
+        filter.startDate.$gte = new Date(req.query.startDateFrom as string);
+      }
+      if (req.query.startDateTo) {
+        filter.startDate.$lte = new Date(req.query.startDateTo as string);
+      }
+    }
+
+    if (req.query.endDateFrom || req.query.endDateTo) {
+      filter.endDate = {};
+      if (req.query.endDateFrom) {
+        filter.endDate.$gte = new Date(req.query.endDateFrom as string);
+      }
+      if (req.query.endDateTo) {
+        filter.endDate.$lte = new Date(req.query.endDateTo as string);
+      }
+    }
+
+    if (req.query.createdFrom || req.query.createdTo) {
+      filter.createdAt = {};
+      if (req.query.createdFrom) {
+        filter.createdAt.$gte = new Date(req.query.createdFrom as string);
+      }
+      if (req.query.createdTo) {
+        filter.createdAt.$lte = new Date(req.query.createdTo as string);
+      }
+    }
+
+    // Sorting
+    const sortField = (req.query.sortBy as string) || "createdAt";
+    const sortOrder = req.query.sortOrder === "asc" ? 1 : -1;
+
     const [competitions, totalCompetitions] = await Promise.all([
-      Competition.find({ isActive: false })
-        .sort({ createdAt: -1 })
+      Competition.find(filter)
+        .sort({ [sortField]: sortOrder })
         .skip(skip)
         .limit(limit),
-      Competition.countDocuments({ isActive: false }),
+
+      Competition.countDocuments(filter),
     ]);
 
     const totalPages = Math.ceil(totalCompetitions / limit);
@@ -69,6 +156,7 @@ export async function fetchAllInActiveCompetition(
         currentPage: page,
         hasNextPage: page < totalPages,
         hasPrevPage: page > 1,
+        limit,
       },
     });
   } catch (error) {
@@ -199,14 +287,21 @@ export async function joinCompetition(
   res: Response,
   next: NextFunction
 ) {
-  const { competitionId } = req.params;
-  const { id: userId } = req.user;
-  const incomingTeams = req.body;
+  const session = await mongoose.startSession();
+  session.startTransaction();
 
   try {
-    // Find competition
-    const competition = await Competition.findById(competitionId);
+    const { competitionId } = req.params;
+    const { id: userId } = req.user;
+    const incomingTeams = req.body;
+
+    // Find competition within transaction
+    const competition = await Competition.findById(competitionId).session(
+      session
+    );
     if (!competition || !competition.isActive) {
+      await session.abortTransaction();
+      session.endSession();
       throw new AppError("Competition not found or inactive", 404);
     }
 
@@ -216,29 +311,41 @@ export async function joinCompetition(
       competition.participantCap &&
       participantCount >= competition.participantCap
     ) {
+      await session.abortTransaction();
+      session.endSession();
       throw new AppError("Competition participant limit reached", 400);
     }
 
-    // Find or create TeamSelection
-    let teamSelection = await TeamSelection.findOne({
-      competition: competitionId,
-      user: userId,
-    });
+    // Check if user already joined
+    const existingParticipant = competition.participants.find(
+      (p) => p.user.toString() === userId.toString()
+    );
 
-    if (!teamSelection) {
-      teamSelection = new TeamSelection({
-        competition: competitionId,
-        user: userId,
-        proofs: [],
-        teams: [],
-        teamPoints: [],
-        totalPoints: 0,
-        stepsVerified: false,
-      });
+    if (existingParticipant?.status === "joined") {
+      await session.abortTransaction();
+      session.endSession();
+      throw new AppError("You have already joined this competition", 400);
+    }
+
+    // For ManGoSet competitions, check entry fee first
+    if (competition.type === "ManGoSet" && competition.entryFee > 0) {
+      try {
+        await removeDitioCoin(competition.entryFee, userId);
+        competition.prizePool += competition.entryFee;
+      } catch (error) {
+        await session.abortTransaction();
+        session.endSession();
+        if (error instanceof AppError) {
+          throw error;
+        }
+        throw new AppError("Failed to process entry fee", 400);
+      }
     }
 
     // Validate incoming teams
     if (!incomingTeams || incomingTeams.length === 0) {
+      await session.abortTransaction();
+      session.endSession();
       throw new AppError("You must select at least one team", 400);
     }
 
@@ -246,13 +353,15 @@ export async function joinCompetition(
       incomingTeams.length < competition.minTeams ||
       incomingTeams.length > competition.maxTeams
     ) {
+      await session.abortTransaction();
+      session.endSession();
       throw new AppError(
         `You must select between ${competition.minTeams} and ${competition.maxTeams} teams`,
         400
       );
     }
 
-    // ✅ Format teams for DB
+    // Format teams for DB
     const formattedTeams = incomingTeams.map((t: any) => ({
       fixtureId: String(t.fixtureId),
       selectedTeam: {
@@ -268,46 +377,64 @@ export async function joinCompetition(
       matchVenue: t.matchVenue ?? "",
     }));
 
-    // ✅ Find starred fixture
+    // Find starred fixture
     const starredFixtures = incomingTeams.filter((t: any) => t.isStarred);
     if (starredFixtures.length > 1) {
+      await session.abortTransaction();
+      session.endSession();
       throw new AppError("You can only star one fixture", 400);
     }
 
     if (starredFixtures.length < 1) {
+      await session.abortTransaction();
+      session.endSession();
       throw new AppError("You must select one star fixture", 400);
     }
 
-    // ✅ Get starred fixture ID (string)
+    // Get starred fixture ID (string)
     const starFixtureId =
       starredFixtures.length === 1
         ? String(starredFixtures[0].fixtureId)
         : null;
 
-    // ✅ Ensure star fixture is unique per competition
+    // Ensure star fixture is unique per competition
     const conflict = await TeamSelection.findOne({
       competition: competitionId,
-      starTeam: starFixtureId, // note: using same DB field name for backward compat
+      starTeam: starFixtureId,
       user: { $ne: userId },
-    });
+    }).session(session);
 
     if (conflict) {
+      await session.abortTransaction();
+      session.endSession();
       throw new AppError(
         "That starred fixture has already been taken by another participant in this competition.",
         400
       );
     }
 
+    // Find or create TeamSelection within transaction
+    let teamSelection = await TeamSelection.findOne({
+      competition: competitionId,
+      user: userId,
+    }).session(session);
+
+    if (!teamSelection) {
+      teamSelection = new TeamSelection({
+        competition: competitionId,
+        user: userId,
+        proofs: [],
+        teams: [],
+        teamPoints: [],
+        totalPoints: 0,
+        stepsVerified: false,
+      });
+    }
+
     teamSelection.teams = formattedTeams;
     teamSelection.starTeam = starFixtureId;
 
-    await teamSelection.save();
-
-    // ✅ Update participants
-    const existingParticipant = competition.participants.find(
-      (p) => p.user.toString() === userId.toString()
-    );
-
+    // Update participants
     if (existingParticipant) {
       existingParticipant.status = "joined";
       existingParticipant.joinedAt = new Date();
@@ -319,14 +446,21 @@ export async function joinCompetition(
       });
     }
 
-    await competition.save();
+    // Save all changes within transaction
+    await teamSelection.save({ session });
+    await competition.save({ session });
+
+    // Commit transaction
+    await session.commitTransaction();
+    session.endSession();
 
     res.status(200).json({
       message: "Successfully joined the competition",
       teamSelection,
     });
   } catch (error) {
-    console.error(error);
+    await session.abortTransaction().catch(() => {});
+    session.endSession();
     next(error);
   }
 }

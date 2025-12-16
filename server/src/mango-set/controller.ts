@@ -4,12 +4,16 @@ import AppError from "../middleware/error";
 import { AuthenticatedRequest } from "../middleware/session";
 import { logger } from "../logger";
 import { generateRandomString } from "better-auth/crypto";
+import { removeDitioCoin } from "../transaction/utils";
+import { rewardEmitter } from "../event-emitter/reward-emitter";
+import { eventEmitter } from "../event-emitter";
 
 export async function createMangoSet(
   req: AuthenticatedRequest,
   res: Response,
   next: NextFunction
 ) {
+  const userId = req.user?.id;
   const {
     name,
     numberOfTeams,
@@ -27,6 +31,8 @@ export async function createMangoSet(
     // Force full-day UTC range
     start.setUTCHours(0, 0, 0, 0);
     end.setUTCHours(23, 59, 59, 999);
+
+    await removeDitioCoin(stake, userId);
 
     const competition = new Competition({
       name,
@@ -50,6 +56,13 @@ export async function createMangoSet(
     });
 
     await competition.save();
+
+    rewardEmitter.emit(
+      "creating-competition-achievement",
+      req.user?.id,
+      competition._id
+    );
+    eventEmitter.emit("recalculate-ranks");
     res.status(201).json(competition);
   } catch (error) {
     logger.error("createTopScore error:", error);

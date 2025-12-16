@@ -1,5 +1,5 @@
 import { Response, Request, NextFunction } from "express";
-import Notification from "../models/notification";
+import Notification, { NotificationStatus } from "../models/notification";
 import AppError from "../middleware/error";
 import { AuthenticatedRequest } from "../middleware/session";
 
@@ -29,14 +29,12 @@ export async function markNotificationAsRead(
   const userId = req.user.id;
   const { notificationId } = req.params;
   try {
-    const notification = await Notification.findOneAndUpdate(
-      { _id: notificationId, recipient: userId },
-      { status: "read" },
-      { new: true }
-    );
+    const notification = await Notification.findById(notificationId);
     if (!notification) {
       throw new AppError("Notification not found", 404);
     }
+    notification.status = NotificationStatus.READ;
+    await notification.save();
     res.status(200).json(notification);
   } catch (error) {
     next(error);
@@ -59,6 +57,28 @@ export async function deleteNotification(
       throw new AppError("Notification not found", 404);
     }
     res.status(200).json({ message: "Notification deleted" });
+  } catch (error) {
+    next(error);
+  }
+}
+
+export async function getUnreadNotificationCount(
+  req: AuthenticatedRequest,
+  res: Response,
+  next: NextFunction
+) {
+  try {
+    const userId = req.user.id;
+
+    const count = await Notification.countDocuments({
+      user: userId,
+      status: "unread",
+    });
+
+    res.status(200).json({
+      message: "success",
+      unreadCount: count,
+    });
   } catch (error) {
     next(error);
   }

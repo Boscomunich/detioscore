@@ -1,6 +1,6 @@
 /**
  * @swagger
- * /man-go-set/create:
+ * /top-score/create:
  *   post:
  *     summary: Create a new TopScore competition
  *     description: |
@@ -8,7 +8,7 @@
  *       The authenticated user will be automatically added as a participant with "pending" status.
  *       The user's DitioCoin balance will be reduced by the specified price (host contribution).
  *     tags:
- *       - MangoSet
+ *       - TopScore
  *     security:
  *       - bearerAuth: []
  *     requestBody:
@@ -117,12 +117,101 @@
 
 /**
  * @swagger
- * /man-go-set/active-competition:
+ * /top-score/upload-proof/{competitionId}:
+ *   post:
+ *     summary: Upload proof images for competition verification
+ *     description: |
+ *       Upload images as proof for competition rule verification steps.
+ *       This endpoint accepts multiple images and associates them with specific verification steps.
+ *       The processing is asynchronous - files are queued for background processing.
+ *     tags:
+ *       - TopScore
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: competitionId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID of the competition
+ *         example: "68fa25fb7bd950c837c8fd9d"
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - images
+ *             properties:
+ *               images:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *                   format: binary
+ *                 description: Array of image files for proof upload
+ *               steps:
+ *                 type: string
+ *                 description: |
+ *                   JSON string array of step objects.
+ *                   Each object must contain id, description, and imageCount properties.
+ *                   Required if steps are being verified.
+ *                 example: '[{"id": "step1", "description": "Instagram follow proof", "imageCount": 1}, {"id": "step2", "description": "Twitter share proof", "imageCount": 1}]'
+ *     responses:
+ *       202:
+ *         description: Proof upload accepted and queued for processing
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Proof upload queued successfullyS"
+ *       400:
+ *         description: Bad request
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *             examples:
+ *               noFiles:
+ *                 value:
+ *                   error: "No files uploaded"
+ *               invalidSteps:
+ *                 value:
+ *                   error: "Invalid steps format"
+ *               stepFileMismatch:
+ *                 value:
+ *                   error: "Number of steps must match number of files"
+ *       401:
+ *         description: Unauthorized - Invalid or missing authentication token
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *             example:
+ *               error: "Invalid or expired token"
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ServerErrorResponse'
+ *             example:
+ *               error: "UploadError"
+ *               message: "Failed to process proof upload"
+ */
+
+/**
+ * @swagger
+ * /top-score/active-competition:
  *   get:
  *     summary: Get active topscore competitions
  *     description: Retrieve a paginated list of all active competitions. Requires authentication.
  *     tags:
- *        - MangoSet
+ *       - TopScore
  *     security:
  *       - bearerAuth: []
  *     parameters:

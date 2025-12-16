@@ -10,5 +10,4 @@ userEmitter.on("init-rank", async (userId: string) => {
 
 userEmitter.on("reinit-rank", async (userId: string, country: string) => {
   const some = await updateUserCountryAndRanks(userId, country);
-  console.log("rank", some);
 });

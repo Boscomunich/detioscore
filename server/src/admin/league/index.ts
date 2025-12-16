@@ -31,12 +31,6 @@ export async function createLeague(
       leagueConfig,
     });
 
-    competition.participants.push({
-      user: req.user?.id,
-      status: "pending",
-      joinedAt: new Date(),
-    });
-
     await competition.save();
     res.status(201).json(competition);
   } catch (error) {

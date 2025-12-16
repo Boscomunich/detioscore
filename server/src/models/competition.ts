@@ -75,11 +75,13 @@ const CompetitionSchema = new mongoose.Schema(
     ],
     isActive: { type: Boolean, default: true },
     isPublic: { type: Boolean, default: true },
-    winner: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "User",
-      default: null,
-    },
+    winner: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+        default: [],
+      },
+    ],
     startDate: { type: Date, default: null },
     endDate: { type: Date, default: null },
   },

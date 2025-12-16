@@ -8,6 +8,7 @@ const WalletSchema = new mongoose.Schema({
     unique: true,
   },
   balance: { type: Number, default: 0 },
+  madeFirstDeposit: { type: Boolean, default: false },
   payoutDetails: {
     type: {
       bank: {

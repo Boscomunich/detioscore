@@ -1,6 +1,6 @@
 import { betterAuth, BetterAuthPlugin } from "better-auth";
 import { mongodbAdapter } from "better-auth/adapters/mongodb";
-import { admin, bearer, createAuthMiddleware, jwt } from "better-auth/plugins";
+import { bearer, createAuthMiddleware } from "better-auth/plugins";
 import mongoose from "../src/database";
 import { emailEmitter } from "../src/event-emitter/email-emitter";
 import { eventEmitter } from "../src/event-emitter";
@@ -28,17 +28,14 @@ export const createAuth = () => {
         }
 
         if (ctx.path.startsWith("/update-user")) {
+          console.log("Update user hook triggered");
           const user = ctx?.context?.newSession?.user;
-
-          console.log("Updated user:", user);
           if (user?.country && user.country !== "Unknown") {
-            console.log("i was called");
             eventEmitter.emit("create-wallet", user.id);
             userEmitter.emit("init-rank", user.id);
           }
         }
       }),
-      // after: updateUser(async (ctx) => {})
     },
 
     plugins: [bearer() as BetterAuthPlugin],
@@ -92,7 +89,7 @@ export const createAuth = () => {
           token
         );
       },
-      resetPasswordTokenExpiresIn: 3600, // 1 hour
+      resetPasswordTokenExpiresIn: 3600,
     },
     session: {
       expiresIn: 60 * 60 * 24 * 7,
